@@ -1,22 +1,23 @@
 import {
-  Building2,
   Send,
   Inbox,
-  FileText,
   DraftingCompass,
   Archive,
   Settings,
   LogOut,
 } from "lucide-react";
-import logo from "../assets/logo.png";
+import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function Sidebar() {
+  const navigate = useNavigate();
+
   return (
     <aside className="sidebar">
       <div>
         <div className="sidebar-logo">
           <div className="logo-box">
-            <img src={logo} alt="NEA Logo" className="logo-img" />
+            <img src="/logo.png" alt="NEA Logo" className="logo-img" />
           </div>
           <div>
             <h2>NEA</h2>
@@ -24,31 +25,54 @@ function Sidebar() {
           </div>
         </div>
 
-        <button className="send-btn">
+        <button
+          className="send-btn"
+          onClick={() => navigate("/new-circular")}
+        >
           <span className="plus">+</span> Send New Circular
         </button>
 
         <nav className="sidebar-nav">
-          <a href="#" className="nav-item active">
+          <NavLink
+            to="/inbox"
+            className={({ isActive }) =>
+              isActive ? "nav-item active" : "nav-item"
+            }
+          >
             <Inbox size={18} />
             <span>Inbox</span>
             <span className="badge">12</span>
-          </a>
+          </NavLink>
 
-          <a href="#" className="nav-item">
+          <NavLink
+            to="/sent"
+            className={({ isActive }) =>
+              isActive ? "nav-item active" : "nav-item"
+            }
+          >
             <Send size={18} />
             <span>Sent</span>
-          </a>
+          </NavLink>
 
-          <a href="#" className="nav-item">
+          <NavLink
+            to="/drafts"
+            className={({ isActive }) =>
+              isActive ? "nav-item active" : "nav-item"
+            }
+          >
             <DraftingCompass size={18} />
             <span>Drafts</span>
-          </a>
+          </NavLink>
 
-          <a href="#" className="nav-item">
+          <NavLink
+            to="/archive"
+            className={({ isActive }) =>
+              isActive ? "nav-item active" : "nav-item"
+            }
+          >
             <Archive size={18} />
             <span>Archive</span>
-          </a>
+          </NavLink>
         </nav>
       </div>
 
