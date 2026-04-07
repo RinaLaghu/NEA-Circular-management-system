@@ -1,11 +1,16 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./component/login";
-
-function App() {
-  return <Login />;
 import CircularDashboard from "./pages/CircularDashboard";
 
 function App() {
-  return <CircularDashboard />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/dashboard" element={<CircularDashboard />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;
