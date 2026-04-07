@@ -96,7 +96,7 @@ function CircularDashboard() {
             <StatCard
               title="Pending Sync"
               value="08"
-              footer="Last synced 2m ago"
+              footer="Last synced 2 minutes ago"
               accent="gray"
             />
           </div>

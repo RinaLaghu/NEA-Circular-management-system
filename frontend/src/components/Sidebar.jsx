@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import logo from "../assets/logo.png";
 
 function Sidebar() {
   return (
@@ -15,7 +16,7 @@ function Sidebar() {
       <div>
         <div className="sidebar-logo">
           <div className="logo-box">
-            <Building2 size={20} />
+            <img src={logo} alt="NEA Logo" className="logo-img" />
           </div>
           <div>
             <h2>NEA</h2>

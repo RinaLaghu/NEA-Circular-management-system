@@ -493,3 +493,17 @@ input {
     width: 100%;
   }
 }
+.logo-img {
+  width: 42px;
+  height: 50px;
+  object-fit: contain;
+}
+.logo-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
