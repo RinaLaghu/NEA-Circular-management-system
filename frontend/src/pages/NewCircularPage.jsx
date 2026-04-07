@@ -59,17 +59,19 @@ function NewCircularPage() {
       <div className="nc-layout">
         <div className="nc-main">
           <div className="nc-card">
-            <div className="nc-field-label">CIRCULAR TITLE / SUBJECT</div>
-            <input
-              className="nc-input"
-              placeholder="Enter a concise subject line..."
-              value={circularTitle}
-              onChange={(e) => setCircularTitle(e.target.value)}
-            />
+            <div className="nc-field-block">
+              <label className="nc-field-label">CIRCULAR TITLE / SUBJECT</label>
+              <input
+                className="nc-input"
+                placeholder="Enter a concise subject line..."
+                value={circularTitle}
+                onChange={(e) => setCircularTitle(e.target.value)}
+              />
+            </div>
 
             <div className="nc-row">
               <div className="nc-col">
-                <div className="nc-field-label">CATEGORY</div>
+                <label className="nc-field-label">CATEGORY</label>
                 <select
                   className="nc-select"
                   value={category}
@@ -83,20 +85,37 @@ function NewCircularPage() {
               </div>
 
               <div className="nc-col">
-                <div className="nc-field-label">PRIORITY LEVEL</div>
+                <label className="nc-field-label">PRIORITY LEVEL</label>
                 <div className="nc-priority-group">
-                  {["routine", "urgent", "confidential"].map((p) => (
-                    <button
-                      type="button"
-                      key={p}
-                      className={`nc-priority-btn ${p} ${
-                        priority === p ? "active" : ""
-                      }`}
-                      onClick={() => setPriority(p)}
-                    >
-                      {p.charAt(0).toUpperCase() + p.slice(1)}
-                    </button>
-                  ))}
+                  <button
+                    type="button"
+                    className={`nc-priority-btn ${
+                      priority === "routine" ? "is-active routine" : ""
+                    }`}
+                    onClick={() => setPriority("routine")}
+                  >
+                    ROUTINE
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nc-priority-btn ${
+                      priority === "urgent" ? "is-active urgent" : ""
+                    }`}
+                    onClick={() => setPriority("urgent")}
+                  >
+                    URGENT
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`nc-priority-btn ${
+                      priority === "confidential" ? "is-active confidential" : ""
+                    }`}
+                    onClick={() => setPriority("confidential")}
+                  >
+                    CONFIDENTIAL
+                  </button>
                 </div>
               </div>
             </div>
@@ -105,72 +124,93 @@ function NewCircularPage() {
           <div className="nc-card">
             <div className="nc-recipient-header">
               <div>
-                <div className="nc-recipient-title">Recipient Selection</div>
-                <div className="nc-recipient-sub">
+                <h2 className="nc-section-heading">Recipient Selection</h2>
+                <p className="nc-recipient-sub">
                   Define the internal and external distribution list.
-                </div>
+                </p>
               </div>
+
               <span className="nc-protocol-badge">
-                ✓ Through Administration Protocol Active
+                ✓ THROUGH ADMINISTRATION PROTOCOL ACTIVE
               </span>
             </div>
 
             <div className="nc-recipient-grid">
               <div>
                 <div className="nc-section-mini-title">INTERNAL DEPARTMENTS</div>
+
                 {INTERNAL_DEPTS.map((dept) => (
-                  <div
+                  <button
                     key={dept.id}
-                    className={`nc-dept-item ${
-                      selectedInternal === dept.id ? "selected" : ""
+                    type="button"
+                    className={`nc-dept-card ${
+                      selectedInternal === dept.id ? "selected internal" : ""
                     }`}
                     onClick={() => setSelectedInternal(dept.id)}
                   >
-                    <div className="nc-dept-radio" />
-                    <div>
-                      <div className="nc-dept-name">{dept.name}</div>
-                      <div className="nc-dept-desc">{dept.desc}</div>
+                    <span className="nc-check-circle">
+                      {selectedInternal === dept.id ? "●" : ""}
+                    </span>
+
+                    <div className="nc-dept-text">
+                      <span className="nc-dept-name">{dept.name}</span>
+                      <span className="nc-dept-desc">{dept.desc}</span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
 
               <div>
                 <div className="nc-section-mini-title">EXTERNAL DIRECTORATES</div>
+
                 {EXTERNAL_DEPTS.map((dept) => {
                   const isSelected = selectedExternal.includes(dept.id);
+
                   return (
-                    <div
+                    <button
                       key={dept.id}
-                      className={`nc-dept-item ${isSelected ? "selected external" : ""}`}
+                      type="button"
+                      className={`nc-dept-card ${
+                        isSelected ? "selected external" : ""
+                      }`}
                       onClick={() => toggleExternal(dept.id)}
                     >
-                      <div className="nc-dept-checkbox">
-                        {isSelected ? "✓" : ""}
+                      <span className="nc-check-box">{isSelected ? "✓" : ""}</span>
+
+                      <div className="nc-dept-text">
+                        <span className="nc-dept-name">{dept.name}</span>
                       </div>
-                      <div className="nc-dept-name">{dept.name}</div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
           </div>
 
-          <div className="nc-card">
+          <div className="nc-card nc-editor-card">
             <div className="nc-editor-toolbar">
               <div className="nc-toolbar-tools">
-                <button type="button" className="nc-tool-btn"><b>B</b></button>
-                <button type="button" className="nc-tool-btn"><i>I</i></button>
-                <button type="button" className="nc-tool-btn">☰</button>
+                <button type="button" className="nc-tool-btn">
+                  <b>B</b>
+                </button>
+                <button type="button" className="nc-tool-btn">
+                  <i>I</i>
+                </button>
+                <button type="button" className="nc-tool-btn">
+                  ☰
+                </button>
                 <div className="nc-tool-divider" />
-                <button type="button" className="nc-tool-btn">🔗</button>
+                <button type="button" className="nc-tool-btn">
+                  🔗
+                </button>
               </div>
+
               <span className="nc-word-count">WORD COUNT: {wordCount}</span>
             </div>
 
             <textarea
               className="nc-textarea"
-              placeholder="Commence drafting the official circular text here..."
+              placeholder="Commence drafting the official circular text here. Use precise, authoritative language..."
               value={bodyText}
               onChange={(e) => setBodyText(e.target.value)}
               rows={10}
@@ -187,7 +227,7 @@ function NewCircularPage() {
 
             <div
               className="nc-drop-zone"
-              onClick={() => document.getElementById("fileInput").click()}
+              onClick={() => document.getElementById("fileInput")?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -201,6 +241,7 @@ function NewCircularPage() {
                 hidden
                 onChange={(e) => handleFiles(e.target.files)}
               />
+
               <div className="nc-drop-icon">📄</div>
               <div className="nc-drop-text">Drop files here</div>
               <div className="nc-drop-sub">or click to browse local storage</div>
@@ -211,19 +252,23 @@ function NewCircularPage() {
                 key={file.id}
                 className={`nc-file-item ${file.status === "error" ? "error" : ""}`}
               >
-                <span className="nc-file-icon">
-                  {file.status === "ok" ? "📄" : "⚠️"}
-                </span>
-                <div className="nc-file-info">
-                  <div className={`nc-file-name ${file.status === "error" ? "error" : ""}`}>
-                    {file.name}
-                  </div>
-                  <div className={`nc-file-meta ${file.status === "error" ? "error" : ""}`}>
-                    {file.status === "ok"
-                      ? `${file.size} · Ready to transmit`
-                      : `Validation Error: ${file.error}`}
+                <div className="nc-file-left">
+                  <span className="nc-file-icon">
+                    {file.status === "ok" ? "📄" : "⚠️"}
+                  </span>
+
+                  <div className="nc-file-info">
+                    <div className={`nc-file-name ${file.status === "error" ? "error" : ""}`}>
+                      {file.name}
+                    </div>
+                    <div className={`nc-file-meta ${file.status === "error" ? "error" : ""}`}>
+                      {file.status === "ok"
+                        ? `${file.size} · Ready to transmit`
+                        : `Validation Error: ${file.error}`}
+                    </div>
                   </div>
                 </div>
+
                 <button
                   type="button"
                   className="nc-file-remove"
@@ -236,9 +281,11 @@ function NewCircularPage() {
           </div>
 
           <div className="nc-info-banner">
-            <span>ℹ️</span>
-            Circulars sent before 14:00 will be reviewed by the Directorate on
-            the same business day.
+            <span className="nc-info-icon">ℹ️</span>
+            <span>
+              Circulars sent before 14:00 will be reviewed by the Directorate on
+              the same business day.
+            </span>
           </div>
         </div>
       </div>
@@ -250,9 +297,15 @@ function NewCircularPage() {
         </div>
 
         <div className="nc-footer-actions">
-          <button className="secondary-btn">Save as Draft</button>
-          <button className="secondary-btn">Preview</button>
-          <button className="primary-btn">Send Circular</button>
+          <button type="button" className="nc-secondary-btn">
+            Save as Draft
+          </button>
+          <button type="button" className="nc-secondary-btn">
+            👁 Preview
+          </button>
+          <button type="button" className="nc-primary-btn">
+            ➤ Send Circular
+          </button>
         </div>
       </div>
     </PageLayout>
