@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./login.css";
-import logo from "../assets/logo.png";
+//import logo from "../logo.png";
 
 
 
@@ -30,7 +30,7 @@ function Login() {
   return (
     <div className="container">
       <div className="logo">
-        <img src={logo} alt="NEA Logo" />
+        <img src="/logo.png" alt="NEA Logo" className="logo-img" />
       </div>
 
       <h1>NEA Circular Management</h1>
