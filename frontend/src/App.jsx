@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import Login from "./component/login";
 import InboxPage from "./pages/InboxPage";
 import SentPage from "./pages/SentPage";
 import DraftsPage from "./pages/DraftsPage";
@@ -8,6 +9,7 @@ import NewCircularPage from "./pages/NewCircularPage";
 function App() {
   return (
     <Routes>
+      <Route path="/login" element={<Login />} /> 
       <Route path="/" element={<Navigate to="/inbox" replace />} />
       <Route path="/inbox" element={<InboxPage />} />
       <Route path="/sent" element={<SentPage />} />
