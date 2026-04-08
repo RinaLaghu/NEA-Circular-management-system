@@ -1178,7 +1178,7 @@ input {
 .nc-priority-group {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .nc-priority-btn {
@@ -1187,19 +1187,20 @@ input {
   border-radius: 10px;
   padding: 10px 16px;
   cursor: pointer;
+  width: auto;
 }
 
-.nc-priority-btn.urgent.active {
+.nc-priority-btn.urgent.is-active {
   border-color: #dc2626;
   color: #dc2626;
 }
 
-.nc-priority-btn.routine.active {
+.nc-priority-btn.routine.is-active {
   border-color: #1d4ed8;
   color: #1d4ed8;
 }
 
-.nc-priority-btn.confidential.active {
+.nc-priority-btn.confidential.is-active {
   border-color: #7c3aed;
   color: #7c3aed;
 }
