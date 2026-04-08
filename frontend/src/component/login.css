@@ -9,7 +9,10 @@ body {
     margin-top: 40px;
 }
 
-
+.logo img {
+    width: 50px;
+    height: 50px;
+}
 
 h1 {
     color: #0d3b66;
@@ -115,7 +118,7 @@ button:hover {
     border-radius: 5px;
 }
 
-footer {
+footer  {
     margin-top: 50px;
     padding: 15px;
     font-size: 11px;
@@ -123,7 +126,17 @@ footer {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
+             
+    
 }
+
+
+
+footer .center {
+    display: flex;
+    gap: 25px;
+}
+
 
 .footer-link {
     color: gray;
