@@ -9,7 +9,7 @@ import NewCircularPage from "./pages/NewCircularPage";
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} /> 
+      <Route path="/login" element={<Login />} />
       <Route path="/" element={<Navigate to="/inbox" replace />} />
       <Route path="/inbox" element={<InboxPage />} />
       <Route path="/sent" element={<SentPage />} />
