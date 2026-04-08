@@ -2,7 +2,6 @@ body {
     margin: 0;
     font-family: Arial, sans-serif;
     background: #ffffff;  /* ✅ pure white */
-    background: linear-gradient(to bottom, #e6eaef,#f5f7fa);
 }
 
 .container {
