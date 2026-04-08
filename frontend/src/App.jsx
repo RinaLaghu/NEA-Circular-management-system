@@ -1,15 +1,20 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./component/login";
-import CircularDashboard from "./pages/CircularDashboard";
+import { Navigate, Route, Routes } from "react-router-dom";
+import InboxPage from "./pages/InboxPage";
+import SentPage from "./pages/SentPage";
+import DraftsPage from "./pages/DraftsPage";
+import ArchivePage from "./pages/ArchivePage";
+import NewCircularPage from "./pages/NewCircularPage";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<CircularDashboard />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Navigate to="/inbox" replace />} />
+      <Route path="/inbox" element={<InboxPage />} />
+      <Route path="/sent" element={<SentPage />} />
+      <Route path="/drafts" element={<DraftsPage />} />
+      <Route path="/archive" element={<ArchivePage />} />
+      <Route path="/new-circular" element={<NewCircularPage />} />
+    </Routes>
   );
 }
 
