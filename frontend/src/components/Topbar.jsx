@@ -4,7 +4,7 @@ function Topbar() {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <h2>NEA Circular Management</h2>
+        <h2>NEA CIRCULAR MANAGEMENT</h2>
       </div>
 
       <div className="topbar-right">
