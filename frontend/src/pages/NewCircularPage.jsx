@@ -1,6 +1,7 @@
 import { useState } from "react";
 import PageLayout from "../components/PageLayout";
 import CircularPreviewPage from "./CircularPreviewPage";
+import { useNavigate } from "react-router-dom"; 
 
 const INTERNAL_DEPTS = [
   { id: "hr", name: "Human Resource", desc: "Ensures Labor law" },
@@ -24,6 +25,7 @@ function NewCircularPage() {
   const [bodyText, setBodyText] = useState("");
   const [files, setFiles] = useState([]);
   const [showPreview, setShowPreview] = useState(false); // NEW
+  const navigate = useNavigate(); // NEW
 
   const toggleExternal = (id) => {
     setSelectedExternal((prev) =>
@@ -295,7 +297,7 @@ function NewCircularPage() {
           Draft auto-saved at 11:24 AM
         </div>
         <div className="nc-footer-actions">
-          <button type="button" className="nc-secondary-btn">
+          <button type="button" className="nc-secondary-btn" onClick={() => navigate("/drafts")}>
             Save as Draft
           </button>
           <button

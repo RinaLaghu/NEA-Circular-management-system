@@ -1854,9 +1854,10 @@ input {
 
 .nc-secondary-btn:focus,
 .nc-secondary-btn:active {
-  background-color: #ffffff;   /* pure white */
-  border: 1px solid #cfd8e3;   /* slightly darker border */
-  color: #0d3b66;
+  background: #032f86;   /* pure white */
+  border: 1px solid #032f86;   /* slightly darker border */
+  color: white;
+  box-shadow: 0 4px 10px rgba(3, 47, 134, 0.18);
 }
 
 

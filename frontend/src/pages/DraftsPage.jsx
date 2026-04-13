@@ -11,10 +11,6 @@ function DraftsPage() {
           <h1>Drafts</h1>
           <p className="simple-subtitle">2 saved drafts</p>
         </div>
-
-        <button className="primary-page-btn" onClick={() => navigate("/new-circular")}>
-          + New Circular
-        </button>
       </div>
 
       <div className="cards-stack">
