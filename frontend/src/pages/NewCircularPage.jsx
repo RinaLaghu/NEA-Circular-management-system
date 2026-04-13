@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PageLayout from "../components/PageLayout";
+import CircularPreviewPage from "./CircularPreviewPage";
 
 const INTERNAL_DEPTS = [
   { id: "hr", name: "Human Resource", desc: "Ensures Labor law" },
@@ -22,6 +23,7 @@ function NewCircularPage() {
   const [selectedExternal, setSelectedExternal] = useState(["gen"]);
   const [bodyText, setBodyText] = useState("");
   const [files, setFiles] = useState([]);
+  const [showPreview, setShowPreview] = useState(false); // NEW
 
   const toggleExternal = (id) => {
     setSelectedExternal((prev) =>
@@ -33,7 +35,6 @@ function NewCircularPage() {
 
   const handleFiles = (fileList) => {
     const allowed = ["application/pdf", "image/jpeg", "image/png"];
-
     const newFiles = Array.from(fileList).map((file) => ({
       id: Date.now() + Math.random(),
       name: file.name,
@@ -41,13 +42,34 @@ function NewCircularPage() {
       status: allowed.includes(file.type) ? "ok" : "error",
       error: allowed.includes(file.type) ? "" : "Only PDF, JPG, PNG allowed",
     }));
-
     setFiles((prev) => [...prev, ...newFiles]);
   };
 
   const removeFile = (id) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
+
+  // NEW — swap to preview when Preview button clicked
+  if (showPreview) {
+    return (
+      <CircularPreviewPage
+        data={{
+          circularTitle,
+          category,
+          priority,
+          selectedInternal,
+          selectedExternal,
+          bodyText,
+          files,
+        }}
+        onBack={() => setShowPreview(false)}
+        onSend={() => {
+          alert("Circular sent!"); // replace with your actual send API call
+          setShowPreview(false);
+        }}
+      />
+    );
+  }
 
   return (
     <PageLayout>
@@ -96,7 +118,6 @@ function NewCircularPage() {
                   >
                     ROUTINE
                   </button>
-
                   <button
                     type="button"
                     className={`nc-priority-btn ${
@@ -106,7 +127,6 @@ function NewCircularPage() {
                   >
                     URGENT
                   </button>
-
                   <button
                     type="button"
                     className={`nc-priority-btn ${
@@ -129,7 +149,6 @@ function NewCircularPage() {
                   Define the internal and external distribution list.
                 </p>
               </div>
-
               <span className="nc-protocol-badge">
                 ✓ THROUGH ADMINISTRATION PROTOCOL ACTIVE
               </span>
@@ -138,7 +157,6 @@ function NewCircularPage() {
             <div className="nc-recipient-grid">
               <div>
                 <div className="nc-section-mini-title">INTERNAL DEPARTMENTS</div>
-
                 {INTERNAL_DEPTS.map((dept) => (
                   <button
                     key={dept.id}
@@ -151,7 +169,6 @@ function NewCircularPage() {
                     <span className="nc-check-circle">
                       {selectedInternal === dept.id ? "●" : ""}
                     </span>
-
                     <div className="nc-dept-text">
                       <span className="nc-dept-name">{dept.name}</span>
                       <span className="nc-dept-desc">{dept.desc}</span>
@@ -162,10 +179,8 @@ function NewCircularPage() {
 
               <div>
                 <div className="nc-section-mini-title">EXTERNAL DIRECTORATES</div>
-
                 {EXTERNAL_DEPTS.map((dept) => {
                   const isSelected = selectedExternal.includes(dept.id);
-
                   return (
                     <button
                       key={dept.id}
@@ -176,7 +191,6 @@ function NewCircularPage() {
                       onClick={() => toggleExternal(dept.id)}
                     >
                       <span className="nc-check-box">{isSelected ? "✓" : ""}</span>
-
                       <div className="nc-dept-text">
                         <span className="nc-dept-name">{dept.name}</span>
                       </div>
@@ -190,24 +204,14 @@ function NewCircularPage() {
           <div className="nc-card nc-editor-card">
             <div className="nc-editor-toolbar">
               <div className="nc-toolbar-tools">
-                <button type="button" className="nc-tool-btn">
-                  <b>B</b>
-                </button>
-                <button type="button" className="nc-tool-btn">
-                  <i>I</i>
-                </button>
-                <button type="button" className="nc-tool-btn">
-                  ☰
-                </button>
+                <button type="button" className="nc-tool-btn"><b>B</b></button>
+                <button type="button" className="nc-tool-btn"><i>I</i></button>
+                <button type="button" className="nc-tool-btn">☰</button>
                 <div className="nc-tool-divider" />
-                <button type="button" className="nc-tool-btn">
-                  🔗
-                </button>
+                <button type="button" className="nc-tool-btn">🔗</button>
               </div>
-
               <span className="nc-word-count">WORD COUNT: {wordCount}</span>
             </div>
-
             <textarea
               className="nc-textarea"
               placeholder="Commence drafting the official circular text here. Use precise, authoritative language..."
@@ -221,9 +225,7 @@ function NewCircularPage() {
         <div className="nc-side">
           <div className="nc-card">
             <div className="nc-attach-title">ATTACHMENTS</div>
-            <div className="nc-attach-sub">
-              Official scans and supporting documents.
-            </div>
+            <div className="nc-attach-sub">Official scans and supporting documents.</div>
 
             <div
               className="nc-drop-zone"
@@ -241,7 +243,6 @@ function NewCircularPage() {
                 hidden
                 onChange={(e) => handleFiles(e.target.files)}
               />
-
               <div className="nc-drop-icon">📄</div>
               <div className="nc-drop-text">Drop files here</div>
               <div className="nc-drop-sub">or click to browse local storage</div>
@@ -256,7 +257,6 @@ function NewCircularPage() {
                   <span className="nc-file-icon">
                     {file.status === "ok" ? "📄" : "⚠️"}
                   </span>
-
                   <div className="nc-file-info">
                     <div className={`nc-file-name ${file.status === "error" ? "error" : ""}`}>
                       {file.name}
@@ -268,7 +268,6 @@ function NewCircularPage() {
                     </div>
                   </div>
                 </div>
-
                 <button
                   type="button"
                   className="nc-file-remove"
@@ -295,12 +294,15 @@ function NewCircularPage() {
           <span className="nc-autosave-dot" />
           Draft auto-saved at 11:24 AM
         </div>
-
         <div className="nc-footer-actions">
           <button type="button" className="nc-secondary-btn">
             Save as Draft
           </button>
-          <button type="button" className="nc-secondary-btn">
+          <button
+            type="button"
+            className="nc-secondary-btn"
+            onClick={() => setShowPreview(true)} // NEW
+          >
             👁 Preview
           </button>
           <button type="button" className="nc-primary-btn">
