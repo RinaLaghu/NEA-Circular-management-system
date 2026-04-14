@@ -1,4 +1,4 @@
-import PageLayout from "../components/PageLayout";
+import PageLayout from "@/components/layout/PageLayout";
 
 function CircularPreviewPage({ data, onBack, onSend }) {
   const {

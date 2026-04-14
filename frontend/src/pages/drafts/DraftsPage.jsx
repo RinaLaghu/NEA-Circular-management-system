@@ -1,5 +1,5 @@
-import PageLayout from "../components/PageLayout";
-import CircularListCard from "../components/CircularListCard";
+import PageLayout from "@/components/layout/PageLayout";
+import CircularListCard from "@/components/ui/CircularListCard";
 import { useNavigate } from "react-router-dom";
 
 function DraftsPage() {

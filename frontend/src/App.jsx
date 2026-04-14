@@ -1,10 +1,10 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import Login from "./component/login";
-import InboxPage from "./pages/InboxPage";
-import SentPage from "./pages/SentPage";
-import DraftsPage from "./pages/DraftsPage";
-import ArchivePage from "./pages/ArchivePage";
-import NewCircularPage from "./pages/NewCircularPage";
+import Login from "@/pages/auth/login";
+import InboxPage from "@/pages/mail/InboxPage";
+import SentPage from "@/pages/mail/SentPage";
+import DraftsPage from "@/pages/drafts/DraftsPage";
+import ArchivePage from "@/pages/circular/ArchivePage";
+import NewCircularPage from "@/pages/circular/NewCircularPage";
 
 function App() {
   return (

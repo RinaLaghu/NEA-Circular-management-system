@@ -1,6 +1,6 @@
 import { useState } from "react";
-import PageLayout from "../components/PageLayout";
-import CircularPreviewPage from "./CircularPreviewPage";
+import PageLayout from "@/components/layout/PageLayout";
+import CircularPreviewPage from "@/pages/circular/CircularPreviewPage";
 import { useNavigate } from "react-router-dom"; 
 
 const INTERNAL_DEPTS = [
