@@ -1518,7 +1518,9 @@ input {
 .nc-priority-group {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  justify-content: space-between; /* spread evenly */
+  width: 100%;  
 }
 
 .nc-priority-btn {
@@ -1532,6 +1534,8 @@ input {
   letter-spacing: 1px;
   cursor: pointer;
   transition: 0.2s ease;
+  flex: 1;
+  text-align: center;
 }
 
 .nc-priority-btn:hover {
@@ -1834,7 +1838,9 @@ input {
 .nc-footer-actions {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  justify-content: space-between; /* spread evenly */
+  width: 100%;
 }
 
 .nc-secondary-btn,
@@ -1850,6 +1856,7 @@ input {
   background: white;
   border: 1px solid #dbe3ef;
   color: #0d3b66;
+  
 }
 
 .nc-secondary-btn:focus,
