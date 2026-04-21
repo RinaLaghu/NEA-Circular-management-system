@@ -77,16 +77,16 @@ function Sidebar() {
       </div>
 
       <div className="sidebar-footer">
-        <a href="#" className="nav-item">
-          <Settings size={18} />
-          <span>Settings</span>
-        </a>
+  <div className="nav-item">
+    <Settings size={18} />
+    <span>Settings</span>
+  </div>
 
-        <a href="#" className="nav-item">
-          <LogOut size={18} />
-          <span>Logout</span>
-        </a>
-      </div>
+  <div className="nav-item">
+    <LogOut size={18} />
+    <span>Logout</span>
+  </div>
+</div>
     </aside>
   );
 }
