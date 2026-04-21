@@ -45,19 +45,13 @@ input {
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
 }
 
-.logo-box {
+.logo-img {
   width: 42px;
   height: 42px;
-  border-radius: 8px;
-  background: #0f4c9a;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: contain;
 }
 
 .sidebar-logo h2 {
