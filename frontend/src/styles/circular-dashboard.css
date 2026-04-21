@@ -1189,7 +1189,7 @@ input {
   border-radius: 10px;
   padding: 10px 16px;
   cursor: pointer;
-  width:auto;
+  width: auto;
 }
 
 .nc-priority-btn.urgent.is-active {

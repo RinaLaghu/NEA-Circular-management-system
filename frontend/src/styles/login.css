@@ -11,8 +11,7 @@ body {
 .container {
     text-align: center;
     margin-top: 40px;
-    background: white;
-    flex: 1;
+    background: #ffffff;
 }
 
 .logo img {
