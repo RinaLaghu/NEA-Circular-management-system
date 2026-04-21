@@ -1,7 +1,7 @@
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
-import StatCard from "../components/StatCard";
-import CircularTable from "../components/CircularTable";
+import Sidebar from "@/components/layout/Sidebar";
+import Topbar from "@/components/layout/Topbar";
+import StatCard from "@/components/ui/StatCard";
+import CircularTable from "@/components/circular/CircularTable";
 
 const circulars = [
   {

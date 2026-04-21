@@ -1,5 +1,5 @@
-import Sidebar from "./Sidebar";
-import Topbar from "./Topbar";
+import Sidebar from "@/components/layout/Sidebar";
+import Topbar from "@/components/layout/Topbar";
 
 function PageLayout({ children }) {
   return (

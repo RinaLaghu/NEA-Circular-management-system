@@ -1,6 +1,6 @@
-import PageLayout from "../components/PageLayout";
-import StatCard from "../components/StatCard";
-import CircularTable from "../components/CircularTable";
+import PageLayout from "@/components/layout/PageLayout";
+import StatCard from "@/components/ui/StatCard";
+import CircularTable from "@/components/circular/CircularTable";
 
 const circulars = [
   {

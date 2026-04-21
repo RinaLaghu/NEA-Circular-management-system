@@ -1,5 +1,5 @@
-import PageLayout from "../components/PageLayout";
-import CircularListCard from "../components/CircularListCard";
+import PageLayout from "@/components/layout/PageLayout";
+import CircularListCard from "@/components/ui/CircularListCard";
 import { useNavigate } from "react-router-dom";
 
 function DraftsPage() {
@@ -11,10 +11,6 @@ function DraftsPage() {
           <h1>Drafts</h1>
           <p className="simple-subtitle">2 saved drafts</p>
         </div>
-
-        <button className="primary-page-btn" onClick={() => navigate("/new-circular")}>
-          + New Circular
-        </button>
       </div>
 
       <div className="cards-stack">
