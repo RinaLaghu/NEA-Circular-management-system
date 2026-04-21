@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo1.png";
+import logo from "../../assets/logo1.png";
 
 function Sidebar() {
   const navigate = useNavigate();
