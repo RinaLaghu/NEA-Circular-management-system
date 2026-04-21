@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo1.png";
 
 function Sidebar() {
   const navigate = useNavigate();
@@ -16,9 +17,7 @@ function Sidebar() {
     <aside className="sidebar">
       <div>
         <div className="sidebar-logo">
-          <div className="logo-box">
-            <img src="/logo.png" alt="NEA Logo" className="logo-img" />
-          </div>
+            <img src={logo} alt="NEA Logo" className="logo-img" />
           <div>
             <h2>NEA</h2>
             <p>Circular Ledger</p>
@@ -77,16 +76,16 @@ function Sidebar() {
       </div>
 
       <div className="sidebar-footer">
-        <a href="#" className="nav-item">
-          <Settings size={18} />
-          <span>Settings</span>
-        </a>
+  <div className="nav-item">
+    <Settings size={18} />
+    <span>Settings</span>
+  </div>
 
-        <a href="#" className="nav-item">
-          <LogOut size={18} />
-          <span>Logout</span>
-        </a>
-      </div>
+  <div className="nav-item">
+    <LogOut size={18} />
+    <span>Logout</span>
+  </div>
+</div>
     </aside>
   );
 }
