@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import "@/styles/login.css";
-//import logo from "../logo.png";
-
-
+import { useNavigate } from "react-router-dom";
 
 function Login() {
+  const navigate = useNavigate();
+
   const departmentData = {
     X: ["NONE"],
     A: ["Corporate Planning and Monitoring", "Power System Management", "Information Technology","Administration Section"],
@@ -21,10 +21,53 @@ function Login() {
   const [directorate, setDirectorate] = useState("");
   const [departments, setDepartments] = useState([]);
 
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const handleDirectorateChange = (e) => {
     const value = e.target.value;
     setDirectorate(value);
     setDepartments(departmentData[value] || []);
+    setSelectedDepartment(""); // reset department when directorate changes
+  };
+
+  const handleLogin = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/department/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          directorate,
+          name: selectedDepartment,
+          password
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || "Login failed");
+      }
+
+      // store session
+      localStorage.setItem("department", JSON.stringify(data));
+
+      // redirect
+      navigate("/inbox");
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,10 +91,15 @@ function Login() {
         </select>
 
         <label>DEPARTMENT</label>
-        <select>
-          <option>Select Department</option>
+        <select
+          value={selectedDepartment}
+          onChange={(e) => setSelectedDepartment(e.target.value)}
+        >
+          <option value="">Select Department</option>
           {departments.map((dep, index) => (
-            <option key={index}>{dep}</option>
+            <option key={index} value={dep}>
+              {dep}
+            </option>
           ))}
         </select>
 
@@ -61,11 +109,24 @@ function Login() {
         </div>
 
         <div className="password-box">
-          <input type="password" placeholder="Enter password" />
+          <input
+            type="password"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
           <span className="eye">👁</span>
         </div>
 
-        <button>Validate and Enter 🔒</button>
+        {error && (
+          <p style={{ color: "red", marginTop: "10px" }}>
+            {error}
+          </p>
+        )}
+
+        <button onClick={handleLogin} disabled={loading}>
+          {loading ? "Validating..." : "Validate and Enter 🔒"}
+        </button>
       </div>
 
       <div className="warning">
