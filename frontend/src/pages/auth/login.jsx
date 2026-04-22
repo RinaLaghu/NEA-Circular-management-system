@@ -90,9 +90,9 @@ function Login() {
           <option value="D">Finance</option>
           <option value="E">Generation</option>
           <option value="F">Transmission</option>
-          <option value="G">Distribution & consumer services</option>
+          <option value="G">Distribution & Consumer Services</option>
           <option value="H">Engineering Service</option>
-          <option value="I">Project management</option>
+          <option value="I">Project Management</option>
         </select>
 
         <label>DEPARTMENT</label>
@@ -120,7 +120,6 @@ function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <span className="eye">👁</span>
         </div>
 
         {error && (
