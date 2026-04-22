@@ -88,6 +88,11 @@ function Login() {
           <option value="B">Business Development</option>
           <option value="C">Administration</option>
           <option value="D">Finance</option>
+          <option value="E">Generation</option>
+          <option value="F">Transmission</option>
+          <option value="G">Distribution & consumer services</option>
+          <option value="H">Engineering Service</option>
+          <option value="I">Project management</option>
         </select>
 
         <label>DEPARTMENT</label>
