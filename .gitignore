@@ -93,3 +93,4 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+backend/app.db 
