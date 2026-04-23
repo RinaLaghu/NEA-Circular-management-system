@@ -1,7 +1,44 @@
 import PageLayout from "@/components/layout/PageLayout";
-import CircularListCard from "@/components/ui/CircularListCard";
+import CircularTable from "@/components/circular/CircularTable";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function ArchivePage() {
+  const [circulars, setCirculars] = useState([]);
+  const [activeId, setActiveId] = useState(null);
+  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+const fetchArchive = () => {
+  fetch("http://127.0.0.1:8000/circular/archive")
+    .then((res) => res.json())
+    .then((data) => setCirculars(data));
+};
+
+useEffect(() => {
+  fetchArchive();
+}, []);
+
+  const filtered = circulars.filter(c =>
+    c.subject.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleUnarchive = async (id) => {
+  await fetch(
+    `http://127.0.0.1:8000/circular/unarchive/${encodeURIComponent(id)}`,
+    { method: "PUT" }
+  );
+
+  fetchArchive(); // 🔥 refresh from DB
+};
+  const handleDelete = async (id) => {
+  await fetch(
+    `http://127.0.0.1:8000/circular/delete/${encodeURIComponent(id)}`,
+    { method: "DELETE" }
+  );
+
+  fetchArchive(); // 🔥 refresh
+};
+
   return (
     <PageLayout>
       <div className="simple-page-header archive-centered-header">
@@ -17,46 +54,19 @@ function ArchivePage() {
           type="text"
           className="archive-search-input"
           placeholder="Search archived circulars..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      <div className="cards-stack">
-        <CircularListCard
-          icon="🗂"
-          title="New Year Operational Circular 2025"
-          subtitle="From: Admin Office"
-          tag="Routine"
-          tagType="routine"
-          date="Jan 01"
-        />
-
-        <CircularListCard
-          icon="🗂"
-          title="Emergency Power Shutdown Protocol"
-          subtitle="From: Operations"
-          tag="Urgent"
-          tagType="urgent"
-          date="Dec 14"
-        />
-
-        <CircularListCard
-          icon="🗂"
-          title="Board Meeting Minutes Distribution"
-          subtitle="From: Secretariat"
-          tag="Confidential"
-          tagType="confidential"
-          date="Nov 22"
-        />
-
-        <CircularListCard
-          icon="🗂"
-          title="Revised Leave Encashment Policy"
-          subtitle="From: HR Department"
-          tag="Routine"
-          tagType="routine"
-          date="Nov 10"
-        />
-      </div>
+      <CircularTable
+       circulars={filtered}
+  mode="archive"
+  activeId={activeId}
+  setActiveId={setActiveId}
+  onUnarchive={handleUnarchive}
+  onDelete={handleDelete}
+      />
 
       <div className="bottom-status-bar">
         <span className="status-dot"></span>
