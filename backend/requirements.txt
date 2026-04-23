@@ -4,3 +4,5 @@ sqlalchemy
 pydantic
 passlib[bcrypt]
 python-multipart
+bcrypt<4.0
+passlib==1.7.4
