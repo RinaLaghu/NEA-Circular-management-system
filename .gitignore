@@ -29,7 +29,8 @@ MANIFEST
 *.db
 *.sqlite3   
 
-
+app.db
+*.db
 # Environments
 .env
 .venv
@@ -93,3 +94,4 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+backend/app.db 
