@@ -78,18 +78,6 @@ function Sidebar() {
           </NavLink>
         </nav>
       </div>
-
-      <div className="sidebar-footer">
-  <div className="nav-item">
-    <Settings size={18} />
-    <span>Settings</span>
-  </div>
-
-  <div className="nav-item" onClick={handleLogout} style={{ cursor: "pointer" }}>
-  <LogOut size={18} />
-  <span>Logout</span>
-</div>
-</div>
     </aside>
   );
 }

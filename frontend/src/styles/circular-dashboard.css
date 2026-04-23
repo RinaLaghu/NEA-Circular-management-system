@@ -125,17 +125,19 @@ input {
   min-height: 100vh;
   background: #111315;
   padding: 18px;
-  gap: 18px;
+  gap: 0px;
 }
 
 .sidebar {
   width: 255px;
-  background: #eef1f5;
+  background: #e2e4e8;
   border-radius: 6px;
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
+  z-index: 2;
 }
 
 .sidebar-logo {
@@ -257,6 +259,9 @@ input {
   background: #f8fafc;
   border-radius: 6px;
   overflow: hidden;
+  position: relative;
+  z-index: 1; /* goes under sidebar */
+  margin-left: -10px; 
 }
 
 .topbar {
@@ -1961,10 +1966,20 @@ input {
 
 .nc-secondary-btn,
 .nc-primary-btn {
-  padding: 10px 22px; border-radius: 8px; border: 1.5px solid var(--border);
-  background: var(--white); font-family: var(--font); font-size: 13.5px; font-weight: 700;
-  color: var(--text-primary); cursor: pointer; transition: all 0.15s;
-  display: flex; align-items: center; gap: 7px;
+  padding: 10px 22px; 
+  border-radius: 8px; 
+  border: 1.5px solid var(--border);
+  background: var(--white); 
+  font-family: var(--font); 
+  font-size: 13.5px; 
+  font-weight: 700;
+  color: var(--text-primary); 
+  cursor: pointer; 
+  transition: all 0.15s;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  gap: 7px;
   white-space: nowrap;
 
 }
@@ -1986,8 +2001,8 @@ input {
 
 
 .nc-primary-btn {
-  background: #0d3b66;
-  border: 1px solid #0d3b66;
+  background: #032f86;
+  border: 1px solid #032f86;
   color: white;
   box-shadow: 0 4px 10px rgba(3, 47, 134, 0.18);
 }
@@ -1995,7 +2010,9 @@ input {
 
 .nc-secondary-btn:hover
 {
-  background-color: white;
+  background:#0d3b66;
+  border: 1px solid #0d3b66;
+  color: white;
 }
 
 .nc-primary-btn:hover {
