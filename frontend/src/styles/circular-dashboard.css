@@ -471,16 +471,20 @@ input {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  background: #d1d5db; /* default gray when not active */
 }
 
 .dot.unread {
-  background: #dc2626;
+  background: #d1d5db; /* gray by default */
 }
 
 .dot.read {
-  background: #cbd5e1;
+  background: #d1d5db; /* gray by default */
 }
 
+.legend-item.legend-active .dot {
+  background: #dc2626; /* red only when active/clicked */
+}
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
