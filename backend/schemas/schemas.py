@@ -4,3 +4,4 @@ class DepartmentLogin(BaseModel):
     directorate: str
     name: str
     password: str
+    

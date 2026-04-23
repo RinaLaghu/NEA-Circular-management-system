@@ -12,6 +12,10 @@ import logo from "@/assets/logo1.png";
 
 function Sidebar() {
   const navigate = useNavigate();
+  const handleLogout = () => {
+  localStorage.removeItem("token"); // remove if not using tokens
+  navigate("/login");
+};
 
   return (
     <aside className="sidebar">
@@ -81,10 +85,10 @@ function Sidebar() {
     <span>Settings</span>
   </div>
 
-  <div className="nav-item">
-    <LogOut size={18} />
-    <span>Logout</span>
-  </div>
+  <div className="nav-item" onClick={handleLogout} style={{ cursor: "pointer" }}>
+  <LogOut size={18} />
+  <span>Logout</span>
+</div>
 </div>
     </aside>
   );
