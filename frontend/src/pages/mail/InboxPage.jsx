@@ -123,6 +123,22 @@ function CircularDashboard() {
     a.click();
     URL.revokeObjectURL(url);
   };
+  const handleView = async (circular) => {
+  setSelectedCircular(circular);
+
+  // only call if still unread
+  if (circular.status === "unread") {
+    await fetch(`http://127.0.0.1:8000/circular/read/${encodeURIComponent(circular.id)}`, {
+      method: "PUT",
+    });
+
+    // update local state so the badge reflects immediately
+    setCirculars(prev =>
+      prev.map(c => c.id === circular.id ? { ...c, status: "read" } : c)
+    );
+    setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - 1) }));
+  }
+};
 
   return (
     <div className="dashboard-layout">
@@ -159,15 +175,36 @@ function CircularDashboard() {
                 <option value="Routine">Routine</option>
               </select>
 
-              <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
-              >
-                <option value="">All Status</option>
-                <option value="unread">Unread</option>
-                <option value="read">Read</option>
-              </select>
+              {/* Replace the status <select> with this */}
+<div style={{ display: "flex", gap: "8px" }}>
+  <button
+    onClick={() => setFilters({ ...filters, status: filters.status === "unread" ? "" : "unread" })}
+    style={{
+      padding: "8px 14px",
+      borderRadius: "6px",
+      border: "1px solid #ccc",
+      cursor: "pointer",
+      background: filters.status === "unread" ? "#ef4444" : "#fff",
+      color: filters.status === "unread" ? "#fff" : "#000",
+    }}
+  >
+    Unread
+  </button>
+
+  <button
+    onClick={() => setFilters({ ...filters, status: filters.status === "read" ? "" : "read" })}
+    style={{
+      padding: "8px 14px",
+      borderRadius: "6px",
+      border: "1px solid #ccc",
+      cursor: "pointer",
+      background: filters.status === "read" ? "#22c55e" : "#fff",
+      color: filters.status === "read" ? "#fff" : "#000",
+    }}
+  >
+    Read
+  </button>
+</div>
 
               <input
                 type="text"
@@ -195,12 +232,25 @@ function CircularDashboard() {
           <div className="table-section">
             <div className="table-header">
               <h3>Inbox / Latest Circulars</h3>
-              <div className="legend">
-                <span className="legend-item"><span className="dot unread"></span> Unread</span>
-                <span className="legend-item"><span className="dot read"></span> Read</span>
-              </div>
+             <div className="legend">
+  <span
+    className={`legend-item ${filters.status === "unread" ? "legend-active" : ""}`}
+    onClick={() => setFilters({ ...filters, status: filters.status === "unread" ? "" : "unread" })}
+    style={{ cursor: "pointer" }}
+  >
+    <span className="dot unread"></span> Unread
+  </span>
+
+  <span
+    className={`legend-item ${filters.status === "read" ? "legend-active" : ""}`}
+    onClick={() => setFilters({ ...filters, status: filters.status === "read" ? "" : "read" })}
+    style={{ cursor: "pointer" }}
+  >
+    <span className="dot read"></span> Read
+  </span>
+</div>
             </div>
-            <CircularTable circulars={filtered} onArchive={handleArchive} onView={(c) => setSelectedCircular(c)}/>
+            <CircularTable circulars={filtered} onArchive={handleArchive} onView={handleView}/>
               {selectedCircular && (
             <CircularViewer
               circular={selectedCircular}
