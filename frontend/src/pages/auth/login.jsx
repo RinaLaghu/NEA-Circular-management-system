@@ -59,6 +59,7 @@ function Login() {
 
       // store session
       localStorage.setItem("department", JSON.stringify(data));
+      localStorage.setItem("token", "userLoggedIn");
 
       // redirect
       navigate("/inbox");

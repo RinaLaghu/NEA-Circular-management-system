@@ -8,9 +8,9 @@ function Topbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showBell, setShowBell] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
   const [notifications, setNotifications] = useState([]);
-
+const isLoggedIn = !!localStorage.getItem("token");
+const [showProfile, setShowProfile] = useState(false);
   const bellRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -45,8 +45,9 @@ function Topbar() {
       });
   }, [searchQuery]);
 
+
   const handleLogout = () => {
-    localStorage.removeItem("department");
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
@@ -58,86 +59,38 @@ function Topbar() {
 
       <div className="topbar-right">
 
-        {/* SEARCH */}
-        <div className="search-box" style={{ position: "relative" }}>
-          <Search size={16} />
-          <input
-            type="text"
-            placeholder="Search circulars..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchResults.length > 0 && (
-            <div className="search-dropdown">
-              {searchResults.map((c) => (
-                <div
-                  key={c.id}
-                  className="search-result-item"
-                  onClick={() => {
-                    navigate("/inbox");
-                    setSearchQuery("");
-                    setSearchResults([]);
-                  }}
-                >
-                  <strong>{c.subject}</strong>
-                  <small>{c.description}</small>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* HELP */}
-        <button className="icon-btn" onClick={() => window.open("mailto:support@nea.gov.np")}>
-          <CircleHelp size={18} />
-        </button>
-
-        {/* BELL */}
-        <div style={{ position: "relative" }} ref={bellRef}>
-          <button className="icon-btn" onClick={() => setShowBell(!showBell)}>
-            <Bell size={18} />
-            {notifications.length > 0 && (
-              <span className="notif-dot">{notifications.length}</span>
-            )}
-          </button>
-          {showBell && (
-            <div className="dropdown-box">
-              <p className="dropdown-title">Recent Activity</p>
-              {notifications.length === 0 ? (
-                <p className="dropdown-empty">No recent activity</p>
-              ) : (
-                notifications.map((n) => (
-                  <div key={n.id} className="dropdown-item">
-                    <strong>{n.subject}</strong>
-                    <small>{n.date}</small>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* PROFILE */}
-        <div style={{ position: "relative" }} ref={profileRef}>
-          <button className="profile-btn" onClick={() => setShowProfile(!showProfile)}>
-            <UserCircle2 size={24} />
-          </button>
-          {showProfile && (
-            <div className="dropdown-box">
-              <div className="dropdown-item" onClick={() => navigate("/profile")}>
-                👤 Profile
-              </div>
-              <div className="dropdown-item" onClick={() => navigate("/settings")}>
-                ⚙️ Settings
-              </div>
-              <div className="dropdown-item danger" onClick={handleLogout}>
-                🚪 Logout
-              </div>
-            </div>
-          )}
-        </div>
-
+  {!isLoggedIn ? (
+    // 🔴 NOT LOGGED IN
+    <button className="login-btn" onClick={() => navigate("/login")}>
+      Login
+    </button>
+  ) : (
+    // 🟢 LOGGED IN
+    <>
+      {/* SEARCH */}
+      <div className="search-box" style={{ position: "relative" }}>
+        <Search size={16} />
+        <input
+          type="text"
+          placeholder="Search circulars..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
+
+      {/* BELL */}
+      <div style={{ position: "relative" }} ref={bellRef}>
+        <button className="icon-btn" onClick={() => setShowBell(!showBell)}>
+          <Bell size={18} />
+        </button>
+      </div>
+
+      {/* LOGOUT */}
+      
+    </>
+  )}
+
+</div>
     </header>
   );
 }

@@ -1,19 +1,16 @@
-import {
-  Send,
-  Inbox,
-  DraftingCompass,
-  Archive,
-  Settings,
-  LogOut,
-} from "lucide-react";
-import { NavLink } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Send, Inbox, DraftingCompass, Archive, Star, LayoutList, LogOut } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo1.png";
 
 function Sidebar() {
   const navigate = useNavigate();
+const isLoggedIn = !!localStorage.getItem("token");
+  const department = JSON.parse(localStorage.getItem("department") || "{}");
+const canSendCircular = isLoggedIn;
+
   const handleLogout = () => {
-  localStorage.removeItem("department"); // remove auth data
+  localStorage.removeItem("token"); // remove if not using tokens
   navigate("/login");
 };
 
@@ -21,62 +18,47 @@ function Sidebar() {
     <aside className="sidebar">
       <div>
         <div className="sidebar-logo">
-            <img src={logo} alt="NEA Logo" className="logo-img" />
+          <img src={logo} alt="NEA Logo" className="logo-img" />
           <div>
             <h2>NEA</h2>
             <p>Circular Ledger</p>
           </div>
         </div>
 
-        <button
-          className="send-btn"
-          onClick={() => navigate("/new-circular")}
-        >
-          <span className="plus">+</span> Send New Circular
-        </button>
+        {isLoggedIn && canSendCircular && (
+          <button className="send-btn" onClick={() => navigate("/new-circular")}>
+            <span className="plus">+</span> Send New Circular
+          </button>
+        )}
 
         <nav className="sidebar-nav">
-          <NavLink
-            to="/inbox"
-            className={({ isActive }) =>
-              isActive ? "nav-item active" : "nav-item"
-            }
-          >
-            <Inbox size={18} />
-            <span>Inbox</span>
-            <span className="badge">12</span>
-          </NavLink>
-
-          <NavLink
-            to="/sent"
-            className={({ isActive }) =>
-              isActive ? "nav-item active" : "nav-item"
-            }
-          >
-            <Send size={18} />
-            <span>Sent</span>
-          </NavLink>
-
-          <NavLink
-            to="/drafts"
-            className={({ isActive }) =>
-              isActive ? "nav-item active" : "nav-item"
-            }
-          >
-            <DraftingCompass size={18} />
-            <span>Drafts</span>
-          </NavLink>
-
-          <NavLink
-            to="/archive"
-            className={({ isActive }) =>
-              isActive ? "nav-item active" : "nav-item"
-            }
-          >
-            <Archive size={18} />
-            <span>Archive</span>
-          </NavLink>
+          {!isLoggedIn ? (
+            <>
+              {navItem("/inbox", <Inbox size={18} />, "Inbox")}
+              {navItem("/all-circulars", <LayoutList size={18} />, "All Circulars")}
+            
+            </>
+          ) : (
+            <>
+              {navItem("/inbox", <Inbox size={18} />, "Inbox", "12")}
+              {navItem("/sent", <Send size={18} />, "Sent")}
+              {navItem("/drafts", <DraftingCompass size={18} />, "Drafts")}
+              {navItem("/archive", <Archive size={18} />, "Archive")}
+            </>
+          )}
         </nav>
+      </div>
+
+      <div style={{ marginTop: "auto" }}>
+        {isLoggedIn ? (
+          <button className="nav-item" onClick={handleLogout}>
+            <LogOut size={18} /><span>Logout</span>
+          </button>
+        ) : (
+          <button className="nav-item" onClick={() => navigate("/login")}>
+            <LogOut size={18} /><span>Login</span>
+          </button>
+        )}
       </div>
     </aside>
   );

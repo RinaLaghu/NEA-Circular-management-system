@@ -63,7 +63,6 @@ function CircularViewer({ circular, onClose, onArchive }) {
           >
             Archive
           </button>
-
           <button onClick={onClose} className="action-btn secondary">
             Close
           </button>
