@@ -1,3 +1,4 @@
+import { authFetch } from '@/utils/api';
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import StatCard from "@/components/ui/StatCard";
@@ -8,7 +9,7 @@ function CircularDashboard() {
   const [circulars, setCirculars] = useState([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/circular/inbox")
+    authFetch("http://127.0.0.1:8000/circular/inbox")
       .then((res) => res.json())
       .then((data) => setCirculars(data));
   }, []);

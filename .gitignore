@@ -4,6 +4,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Custom User files
+forme.md
+
 *.so
 .Python
 env/

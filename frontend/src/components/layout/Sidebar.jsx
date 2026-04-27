@@ -13,7 +13,7 @@ import logo from "@/assets/logo1.png";
 function Sidebar() {
   const navigate = useNavigate();
   const handleLogout = () => {
-  localStorage.removeItem("token"); // remove if not using tokens
+  localStorage.removeItem("department"); // remove auth data
   navigate("/login");
 };
 

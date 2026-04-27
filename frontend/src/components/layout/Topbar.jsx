@@ -1,3 +1,4 @@
+import { authFetch } from '@/utils/api';
 import { Search, Bell, CircleHelp, UserCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
@@ -25,7 +26,7 @@ function Topbar() {
 
   // Fetch recent circulars as notifications
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/circular/inbox")
+    authFetch("http://127.0.0.1:8000/circular/inbox")
       .then((res) => res.json())
       .then((data) => setNotifications(data.slice(0, 5))); // latest 5
   }, []);
@@ -33,7 +34,7 @@ function Topbar() {
   // Global search
   useEffect(() => {
     if (!searchQuery.trim()) return setSearchResults([]);
-    fetch("http://127.0.0.1:8000/circular/inbox")
+    authFetch("http://127.0.0.1:8000/circular/inbox")
       .then((res) => res.json())
       .then((data) => {
         const filtered = data.filter((c) =>
@@ -45,7 +46,7 @@ function Topbar() {
   }, [searchQuery]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("department");
     navigate("/login");
   };
 
