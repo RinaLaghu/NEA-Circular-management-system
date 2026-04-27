@@ -23,5 +23,5 @@ Base.metadata.create_all(bind=engine)
 
 # Include routes
 app.include_router(dept_router, prefix="/department")
-app.include_router(circular_router, dependencies=[Depends(get_current_user)])
+app.include_router(circular_router)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
