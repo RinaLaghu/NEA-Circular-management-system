@@ -1,3 +1,4 @@
+import { authFetch } from '@/utils/api';
 import PageLayout from "@/components/layout/PageLayout";
 import CircularTable from "@/components/circular/CircularTable";
 import React, { useState, useEffect } from "react";
@@ -9,7 +10,7 @@ function ArchivePage() {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
 const fetchArchive = () => {
-  fetch("http://127.0.0.1:8000/circular/archive")
+  authFetch("http://127.0.0.1:8000/circular/archive")
     .then((res) => res.json())
     .then((data) => setCirculars(data));
 };
@@ -23,7 +24,7 @@ useEffect(() => {
   );
 
   const handleUnarchive = async (id) => {
-  await fetch(
+  await authFetch(
     `http://127.0.0.1:8000/circular/unarchive/${encodeURIComponent(id)}`,
     { method: "PUT" }
   );
@@ -31,7 +32,7 @@ useEffect(() => {
   fetchArchive(); // 🔥 refresh from DB
 };
   const handleDelete = async (id) => {
-  await fetch(
+  await authFetch(
     `http://127.0.0.1:8000/circular/delete/${encodeURIComponent(id)}`,
     { method: "DELETE" }
   );

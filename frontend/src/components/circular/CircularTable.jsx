@@ -1,3 +1,4 @@
+import { authFetch } from '@/utils/api';
 import React from "react";
 
 function CircularTable({
@@ -108,7 +109,7 @@ function CircularTable({
                                 onClick={async (e) => {
                                   e.stopPropagation();
 
-                                  await fetch(
+                                  await authFetch(
                                     `http://127.0.0.1:8000/circular/archive/${encodeURIComponent(item.id)}`,
                                     { method: "PUT" }
                                   );
@@ -129,7 +130,7 @@ function CircularTable({
                                 onClick={async (e) => {
                                   e.stopPropagation();
 
-                                  await fetch(
+                                  await authFetch(
                                     `http://127.0.0.1:8000/circular/unarchive/${encodeURIComponent(item.id)}`,
                                     { method: "PUT" }
                                   );
@@ -146,7 +147,7 @@ function CircularTable({
                                 onClick={async (e) => {
                                   e.stopPropagation();
 
-                                  await fetch(
+                                  await authFetch(
                                     `http://127.0.0.1:8000/circular/delete/${encodeURIComponent(item.id)}`,
                                     { method: "DELETE" }
                                   );
