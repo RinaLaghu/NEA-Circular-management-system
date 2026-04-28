@@ -369,22 +369,44 @@ input {
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  gap: 16px; /* space between buttons */
   margin-top: 14px;
+  align-items: center;
 }
 
+/* MAIN BUTTON STYLE */
 .action-btn {
   border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
+  padding: 10px 18px; /* 👈 more horizontal space */
+  border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* icon-text spacing */
+  min-width: 110px; /* 👈 forces proper button width */
+  justify-content: center;
+
+  white-space: nowrap; /* prevents text breaking */
+  transition: 0.2s ease;
 }
 
 .action-btn.secondary {
   background: #eef2f7;
   color: #4b5563;
+}
+
+.action-btn.secondary:hover {
+  background: #e2e8f0;
+}
+
+/* ICON */
+.btn-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 .stats-grid {
@@ -467,28 +489,35 @@ input {
 }
 
 .legend-item {
+  padding: 4px 10px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
+/* active pill */
+.legend-item.active {
+  background: #eef3ff;
+  font-weight: 600;
+  color: #0d3b66;
+}
+
+/* default dot = gray */
 .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #d1d5db; /* default gray when not active */
+  display: inline-block;
+  margin-right: 6px;
+  background: #d1d5db;
 }
 
-.dot.unread {
-  background: #d1d5db; /* gray by default */
-}
-
-.dot.read {
-  background: #d1d5db; /* gray by default */
-}
-
-.legend-item.legend-active .dot {
-  background: #dc2626; /* red only when active/clicked */
+/* ONLY when parent is active */
+.legend-item.active .dot.unread,
+.legend-item.active .dot.read {
+  background: #e74c3c;
 }
 .table-wrapper {
   width: 100%;
