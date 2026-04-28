@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.dept import Department
-from schemas.dept import DepartmentLogin
+from app.schemas.dept import DepartmentLogin
 from app.core.security import verify_password, hash_password, create_access_token
 from app.deps.auth import get_current_user, get_current_admin
 from datetime import timedelta

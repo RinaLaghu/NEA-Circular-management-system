@@ -6,6 +6,9 @@ class DirectorateBase(BaseModel):
 class DirectorateCreate(DirectorateBase):
     pass
 
+class DirectorateUpdate(DirectorateBase):
+    pass
+
 class DirectorateOut(DirectorateBase):
     id: int
     class Config:

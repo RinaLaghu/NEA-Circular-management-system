@@ -4,7 +4,7 @@ from typing import List
 
 from app.db.database import get_db
 from app.models.dept import Department
-from schemas.dept import DepartmentCreate, DepartmentUpdate, DepartmentOut
+from app.schemas.dept import DepartmentCreate, DepartmentUpdate, DepartmentOut
 
 router = APIRouter(
     tags=["Departments"]
