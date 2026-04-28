@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "@/styles/login.css";
 import { useNavigate } from "react-router-dom";
+import lockIcon from "../../assets/lock.png";
 
 function Login() {
   const navigate = useNavigate();
@@ -20,10 +21,8 @@ function Login() {
 
   const [directorate, setDirectorate] = useState("");
   const [departments, setDepartments] = useState([]);
-
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,7 +30,7 @@ function Login() {
     const value = e.target.value;
     setDirectorate(value);
     setDepartments(departmentData[value] || []);
-    setSelectedDepartment(""); // reset department when directorate changes
+    setSelectedDepartment("");
   };
 
   const handleLogin = async () => {
@@ -57,11 +56,8 @@ function Login() {
         throw new Error(data.detail || "Login failed");
       }
 
-      // store session
       localStorage.setItem("department", JSON.stringify(data));
       localStorage.setItem("token", "userLoggedIn");
-
-      // redirect
       navigate("/inbox");
 
     } catch (err) {
@@ -72,73 +68,75 @@ function Login() {
   };
 
   return (
-    <div className="container">
-      <div className="logo">
-        <img src="/logo.png" alt="NEA Logo" className="logo-img" />
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
 
-      <h1>NEA Circular Management</h1>
-      <p className="subtitle">AUTHORIZED PERSONNEL ACCESS ONLY</p>
-
-      <div className="card">
-        <label>DIRECTORATE</label>
-        <select value={directorate} onChange={handleDirectorateChange}>
-          <option value="" disabled>Select Directorate</option>
-          <option value="X">BOARD OF DIRECTORS</option>
-          <option value="A">Planning, Monitoring and IT</option>
-          <option value="B">Business Development</option>
-          <option value="C">Administration</option>
-          <option value="D">Finance</option>
-          <option value="E">Generation</option>
-          <option value="F">Transmission</option>
-          <option value="G">Distribution & Consumer Services</option>
-          <option value="H">Engineering Service</option>
-          <option value="I">Project Management</option>
-        </select>
-
-        <label>DEPARTMENT</label>
-        <select
-          value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
-        >
-          <option value="">Select Department</option>
-          {departments.map((dep, index) => (
-            <option key={index} value={dep}>
-              {dep}
-            </option>
-          ))}
-        </select>
-
-        <div className="password-label">
-          <label>ACCESS TOKEN / PASSWORD</label>
-          <span className="forgot">FORGOT?</span>
+      <div className="container">
+        <div className="logo">
+          <img src="/logo.png" alt="NEA Logo" className="logo-img" />
         </div>
 
-        <div className="password-box">
-          <input
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        <h1>NEA Circular Management</h1>
+        <p className="subtitle">AUTHORIZED PERSONNEL ACCESS ONLY</p>
+
+        <div className="card">
+          <label>DIRECTORATE</label>
+          <select value={directorate} onChange={handleDirectorateChange}>
+            <option value="" disabled>Select Directorate</option>
+            <option value="X">BOARD OF DIRECTORS</option>
+            <option value="A">Planning, Monitoring and IT</option>
+            <option value="B">Business Development</option>
+            <option value="C">Administration</option>
+            <option value="D">Finance</option>
+            <option value="E">Generation</option>
+            <option value="F">Transmission</option>
+            <option value="G">Distribution & Consumer Services</option>
+            <option value="H">Engineering Service</option>
+            <option value="I">Project Management</option>
+          </select>
+
+          <label>DEPARTMENT</label>
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+          >
+            <option value="">Select Department</option>
+            {departments.map((dep, index) => (
+              <option key={index} value={dep}>{dep}</option>
+            ))}
+          </select>
+
+          <div className="password-label">
+            <label>ACCESS TOKEN / PASSWORD</label>
+            <span className="forgot">FORGOT?</span>
+          </div>
+
+          <div className="password-box">
+            <input
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          {error && (
+            <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
+          )}
+<button onClick={handleLogin} disabled={loading}>
+  {loading ? "Validating..." : (
+    <>
+      Validate and Enter <img src={lockIcon} className="lock-icon" />
+    </>
+  )}
+</button>
         </div>
 
-        {error && (
-          <p style={{ color: "red", marginTop: "10px" }}>
-            {error}
+        <div className="warning">
+          <p>
+            By accessing this system, you agree to comply with the National IT Security Policy.
+            All sessions are logged and monitored by the NEA Digital Governance Cell.
           </p>
-        )}
-
-        <button onClick={handleLogin} disabled={loading}>
-          {loading ? "Validating..." : "Validate and Enter 🔒"}
-        </button>
-      </div>
-
-      <div className="warning">
-        <p>
-          By accessing this system, you agree to comply with the National IT Security Policy.
-          All sessions are logged and monitored by the NEA Digital Governance Cell.
-        </p>
+        </div>
       </div>
 
       <footer>
@@ -157,6 +155,7 @@ function Login() {
           © 2024 NEA Circular Ledger v1.0
         </div>
       </footer>
+
     </div>
   );
 }
