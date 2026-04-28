@@ -9,4 +9,4 @@ class DirectorateCreate(DirectorateBase):
 class DirectorateOut(DirectorateBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True   # ✅ updated for Pydantic v2

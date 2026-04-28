@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.settings import get_settings
 from app.deps.db import get_db
-from app.models.base import Department
+from app.models.dept import Department
 
 settings = get_settings()
 
