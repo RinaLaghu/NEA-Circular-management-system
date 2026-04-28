@@ -12,3 +12,4 @@ class Department(Base):
     directorate_id = Column(Integer, ForeignKey("directorates.id"), nullable=False)
 
     directorate = relationship("Directorate", back_populates="departments")
+    user = relationship("User", back_populates="department", uselist=False)  # One-to-one with User
