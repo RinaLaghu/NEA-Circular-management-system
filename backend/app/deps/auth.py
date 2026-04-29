@@ -13,7 +13,7 @@ settings = get_settings()
 # Use HTTPBearer so Swagger UI just asks for the Token string directly!
 security = HTTPBearer()
 
-def get_current_user(auth: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+def get_current_dept(auth: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = auth.credentials
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -34,11 +34,32 @@ def get_current_user(auth: HTTPAuthorizationCredentials = Depends(security), db:
     if dept is None:
         raise credentials_exception
     
-    # Return the active entity (currently Department, easily changed to User for Track D)
     return dept
 
+def require_md(current_dept: Department = Depends(get_current_dept)):
+    if not current_dept.is_md:  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="MD access required."
+        )
+    return current_dept
+
+def require_admin_dept(current_dept: Department = Depends(get_current_dept)):
+    if not current_dept.is_administration and not current_dept.is_md:  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Admin access required."
+        )
+    return current_dept
+
+require_sender = require_admin_dept
+
+# Forward compatibility
+get_current_user = get_current_dept
+
 def get_current_admin(
-    current_user: Department = Depends(get_current_user), 
+    current_dept: Department = Depends(get_current_dept), 
+
     auth: HTTPAuthorizationCredentials = Depends(security)
 ):
     token = auth.credentials
@@ -60,4 +81,4 @@ def get_current_admin(
     except InvalidTokenError:
         raise credentials_exception
         
-    return current_user
+    return current_dept

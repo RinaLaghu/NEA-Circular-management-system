@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from app.db.database import Base
 
 class Department(Base):
@@ -8,5 +8,6 @@ class Department(Base):
 
     directorate = Column(String, index=True, nullable=False)
     name = Column(String, index=True, nullable=False)
-
-    password_hash = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_administration = Column(Boolean, default=False)
+    is_md = Column(Boolean, default=False)

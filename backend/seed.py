@@ -71,7 +71,7 @@ for d in departments:
         Department(
             directorate=d["directorate"],
             name=d["name"],
-            password_hash=hash_password(d["password"])
+            hashed_password=hash_password(d["password"])
         )
     )
 

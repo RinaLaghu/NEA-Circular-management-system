@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.base import Department
-from schemas.schemas import DepartmentLogin
+from schemas.schemas import DepartmentLogin, DepartmentCreate, DepartmentOut
 from app.core.security import verify_password, hash_password, create_access_token
 from app.deps.auth import get_current_user, get_current_admin
 from datetime import timedelta
@@ -22,21 +22,23 @@ def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
 
-    if not verify_password(data.password, dept.password_hash):
+    if not verify_password(data.password, dept.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid password")
 
     # Track D Preparation: Generate Token with sub and role
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     
     # Temporarily make "Information Technology" an admin so we can test the endpoint
-    assigned_role = "admin" if data.name == "Information Technology" else "department"
+    assigned_role = "admin" if dept.name == "Information Technology" else "department"  # type: ignore
 
     # We use "sub" for the ID to be standard, and "role" to define what type of user this is.
     token_payload = {
         "sub": str(dept.id),
-        "role": assigned_role,  
-        "directorate": dept.directorate,
-        "department_name": dept.name
+        "dept_id": dept.id,
+        "role": assigned_role,
+        "directorate_id": dept.directorate, # keep backward compatibility with string for now
+        "is_administration": dept.is_administration,
+        "is_md": dept.is_md
     }
     
     access_token = create_access_token(
@@ -55,7 +57,7 @@ def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
     
 
 @router.post("/add-department", dependencies=[Depends(get_current_admin)])
-def add_department(data: DepartmentLogin, db: Session = Depends(get_db)):
+def add_department(data: DepartmentCreate, db: Session = Depends(get_db)):
 
     # check if already exists
     existing = db.query(Department).filter(
@@ -69,7 +71,9 @@ def add_department(data: DepartmentLogin, db: Session = Depends(get_db)):
     new_dept = Department(
         directorate=data.directorate,
         name=data.name,
-        password_hash=hash_password(data.password)
+        hashed_password=hash_password(data.password),
+        is_administration=data.is_administration,
+        is_md=data.is_md
     )
 
     db.add(new_dept)
@@ -89,7 +93,7 @@ def update_password(data: DepartmentLogin, db: Session = Depends(get_db)):
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
 
-    dept.password_hash = hash_password(data.password)  # type: ignore
+    dept.hashed_password = hash_password(data.password)  # type: ignore
 
     db.commit()
 
@@ -113,7 +117,7 @@ def force_reset_password(data: DepartmentLogin, db: Session = Depends(get_db)):
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
 
-    dept.password_hash = hash_password(data.password)  # type: ignore
+    dept.hashed_password = hash_password(data.password)  # type: ignore
 
     db.commit()
 
