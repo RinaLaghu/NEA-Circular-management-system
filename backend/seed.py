@@ -1,5 +1,5 @@
 from app.db.database import Base, engine, SessionLocal
-from app.models.base import Department
+from app.models.dept import Department
 from app.core.security import hash_password
 
 # create tables
