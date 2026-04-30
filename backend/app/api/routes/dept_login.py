@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.models.base import Department
-from schemas.schemas import DepartmentLogin, DepartmentCreate, DepartmentOut
+from app.models.dept import Department
+from app.schemas.dept import DepartmentLogin, DepartmentCreate, DepartmentOut
 from app.core.security import verify_password, hash_password, create_access_token
 from app.deps.auth import get_current_user, get_current_admin
 from datetime import timedelta
@@ -15,8 +15,8 @@ settings = get_settings()
 def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
 
     dept = db.query(Department).filter(
-        Department.directorate == data.directorate,
-        Department.name == data.name
+        Department.name == data.name,
+        Department.directorate_id == data.directorate_id  
     ).first()
 
     if not dept:
@@ -36,7 +36,7 @@ def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
         "sub": str(dept.id),
         "dept_id": dept.id,
         "role": assigned_role,
-        "directorate_id": dept.directorate, # keep backward compatibility with string for now
+        "directorate_id": dept.directorate_id, # keep backward compatibility with string for now
         "is_administration": dept.is_administration,
         "is_md": dept.is_md
     }
@@ -49,45 +49,19 @@ def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "message": "Login successful",
-        "directorate": dept.directorate,
+        "directorate": dept.directorate_id,
         "department": dept.name,
         "department_id": dept.id
     }
 
     
 
-@router.post("/add-department", dependencies=[Depends(get_current_admin)])
-def add_department(data: DepartmentCreate, db: Session = Depends(get_db)):
-
-    # check if already exists
-    existing = db.query(Department).filter(
-        Department.directorate == data.directorate,
-        Department.name == data.name
-    ).first()
-
-    if existing:
-        raise HTTPException(status_code=400, detail="Department already exists")
-
-    new_dept = Department(
-        directorate=data.directorate,
-        name=data.name,
-        hashed_password=hash_password(data.password),
-        is_administration=data.is_administration,
-        is_md=data.is_md
-    )
-
-    db.add(new_dept)
-    db.commit()
-    db.refresh(new_dept)
-
-    return {"message": "Department added successfully"}
-
 @router.put("/update-password", dependencies=[Depends(get_current_user)])
 def update_password(data: DepartmentLogin, db: Session = Depends(get_db)):
 
     dept = db.query(Department).filter(
-        Department.directorate == data.directorate,
-        Department.name == data.name
+        Department.name == data.name,
+        Department.directorate_id == data.directorate_id
     ).first()
 
     if not dept:
@@ -99,10 +73,6 @@ def update_password(data: DepartmentLogin, db: Session = Depends(get_db)):
 
     return {"message": "Password updated successfully"}
 
-@router.get("/departments", dependencies=[Depends(get_current_user)])
-def get_departments(db: Session = Depends(get_db)):
-    return db.query(Department).all()
-
 
 @router.put("/admin/force-reset-password", dependencies=[Depends(get_current_admin)])
 def force_reset_password(data: DepartmentLogin, db: Session = Depends(get_db)):
@@ -110,8 +80,8 @@ def force_reset_password(data: DepartmentLogin, db: Session = Depends(get_db)):
     ADMIN ONLY: Forcibly overwrite a department's password without needing the old password.
     """
     dept = db.query(Department).filter(
-        Department.directorate == data.directorate,
-        Department.name == data.name
+        Department.name == data.name,
+        Department.directorate_id == data.directorate_id
     ).first()
 
     if not dept:

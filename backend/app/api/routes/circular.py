@@ -6,12 +6,13 @@ from app.models.circular import Circular
 from fastapi.responses import FileResponse, RedirectResponse
 import shutil
 import os
+import uuid
 
-router = APIRouter(prefix="/circular", tags=["Circular"])
+
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-import uuid
+router = APIRouter( tags=["Circular"])
 
 # CREATE circular
 @router.post("/")
