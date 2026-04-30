@@ -6,18 +6,15 @@ from app.models.circular import Circular
 from fastapi.responses import FileResponse, RedirectResponse
 import shutil
 import os
-import uuid
 
-
+router = APIRouter(prefix="/circular", tags=["Circular"])
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-router = APIRouter( tags=["Circular"])
-
 # CREATE circular
 @router.post("/")
-def create_circular(subject: str, file_url: str, db: Session = Depends(get_db)):
-    c = Circular(id=str(uuid.uuid4()), subject=subject, file_url=file_url)
+def create_circular(title: str, file_url: str, db: Session = Depends(get_db)):
+    c = Circular(title=title, file_url=file_url)
     db.add(c)
     db.commit()
     db.refresh(c)
@@ -46,7 +43,7 @@ def archive(cid: str, db: Session = Depends(get_db)):
 
     print("BEFORE:", c.is_archived)   # 🔥 ADD THIS
 
-    c.is_archived = 1  # type: ignore
+    c.is_archived = 1
     db.commit()
     db.refresh(c)
 
@@ -61,7 +58,7 @@ def mark_read(cid: int, db: Session = Depends(get_db)):
     if not c:
         raise HTTPException(404, "Not found")
 
-    c.status = "read"  # type: ignore
+    c.status = "read"
     db.commit()
     return {"message": "read"}
 
@@ -81,9 +78,9 @@ def download_circular(cid: str, db: Session = Depends(get_db)):
     c = db.query(Circular).filter(Circular.id == cid).first()
     if not c:
         raise HTTPException(404, "Circular not found")
-    if not c.file_url:  # type: ignore
+    if not c.file_url:
         raise HTTPException(404, "No file attached to this circular")
-    return RedirectResponse(url=c.file_url)  # type: ignore
+    return RedirectResponse(url=c.file_url)
 
 
 @router.put("/unarchive/{cid:path}")
@@ -91,7 +88,7 @@ def unarchive(cid: str, db: Session = Depends(get_db)):
     c = db.query(Circular).filter(Circular.id == cid).first()
     if not c:
         raise HTTPException(404, "Not found")
-    c.is_archived = 0  # type: ignore
+    c.is_archived = 0
     db.commit()
     return {"message": "unarchived"}
 

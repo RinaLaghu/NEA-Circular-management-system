@@ -11,7 +11,7 @@ class Department(Base):
     is_administration = Column(Boolean, default=False)
     is_md = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
-
-
     directorate_id = Column(Integer, ForeignKey("directorates.id"), nullable=False)
+
     directorate = relationship("Directorate", back_populates="departments")
+    user = relationship("User", back_populates="department", uselist=False)
