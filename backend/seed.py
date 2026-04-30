@@ -1,5 +1,5 @@
 from app.db.database import Base, engine, SessionLocal
-from backend.app.models.dept import Department
+from app.models.dept import Department
 from app.core.security import hash_password
 
 # create tables
@@ -71,7 +71,7 @@ for d in departments:
         Department(
             directorate=d["directorate"],
             name=d["name"],
-            password_hash=hash_password(d["password"])
+            hashed_password=hash_password(d["password"])
         )
     )
 

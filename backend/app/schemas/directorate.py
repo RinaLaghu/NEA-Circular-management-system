@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class DirectorateBase(BaseModel):
     name: str
@@ -6,10 +7,13 @@ class DirectorateBase(BaseModel):
 class DirectorateCreate(DirectorateBase):
     pass
 
-class DirectorateUpdate(DirectorateBase):
-    pass
+class DirectorateUpdate(BaseModel):
+    name: Optional[str] = None
+    is_active: Optional[bool] = None
 
 class DirectorateOut(DirectorateBase):
     id: int
+    is_active: bool
+
     class Config:
-        from_attributes = True   # ✅ updated for Pydantic v2
+        from_attributes = True
