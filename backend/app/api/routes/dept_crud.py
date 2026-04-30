@@ -9,11 +9,11 @@ from app.deps.auth import require_admin_dept
 
 router = APIRouter()
 
-@router.get("/departments/by-directorate/{id}", response_model=List[DepartmentOut])
+@router.get("/by-directorate/{id}", response_model=List[DepartmentOut])
 def list_departments_by_directorate(id: int, db: Session = Depends(get_db)):
     return db.query(Department).filter(Department.directorate_id == id, Department.is_active == True).all()
 
-@router.post("/departments/", response_model=DepartmentOut, dependencies=[Depends(require_admin_dept)])
+@router.post("/", response_model=DepartmentOut)#, dependencies=[Depends(require_admin_dept)])
 def create_department(payload: DepartmentCreate, db: Session = Depends(get_db)):
     # enforce one admin-dept per directorate
     if payload.is_administration:
@@ -43,7 +43,7 @@ def create_department(payload: DepartmentCreate, db: Session = Depends(get_db)):
     db.refresh(dept)
     return dept
 
-@router.put("/departments/{id}", response_model=DepartmentOut, dependencies=[Depends(require_admin_dept)])
+@router.put("/{id}", response_model=DepartmentOut)#, dependencies=[Depends(require_admin_dept)])
 def update_department(id: int, payload: DepartmentUpdate, db: Session = Depends(get_db)):
     dept = db.query(Department).filter(Department.id == id).first()
     if not dept:
@@ -56,7 +56,7 @@ def update_department(id: int, payload: DepartmentUpdate, db: Session = Depends(
     db.refresh(dept)
     return dept
 
-@router.delete("/departments/{id}", response_model=dict, dependencies=[Depends(require_admin_dept)])
+@router.delete("/{id}", response_model=dict)#, dependencies=[Depends(require_admin_dept)])
 def delete_department(id: int, db: Session = Depends(get_db)):
     dept = db.query(Department).filter(Department.id == id).first()
     if not dept:

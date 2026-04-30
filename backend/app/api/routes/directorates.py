@@ -8,27 +8,36 @@ from app.deps.auth import require_admin_dept
 
 router = APIRouter()
 
-@router.get("/directorates/", response_model=List[DirectorateOut])
+@router.get("/", response_model=List[DirectorateOut])
 def list_directorates(db: Session = Depends(get_db)):
     return db.query(Directorate).filter(Directorate.is_active == True).all()
 
-@router.get("/directorates/{id}", response_model=DirectorateOut)
+@router.get("/{id}", response_model=DirectorateOut)
 def get_directorate(id: int, db: Session = Depends(get_db)):
     directorate = db.query(Directorate).filter(Directorate.id == id).first()
     if not directorate:
         raise HTTPException(status_code=404, detail="Directorate not found")
     return directorate
 
-@router.post("/directorates/", response_model=DirectorateOut)
-def create_directorate(payload: DirectorateCreate, db: Session = Depends(get_db), current_dept = Depends(require_admin_dept)):
+@router.post("/", response_model=DirectorateOut)
+def create_directorate(
+    payload: DirectorateCreate, 
+    db: Session = Depends(get_db),
+    #current_dept = Depends(require_admin_dept)
+    ):
     directorate = Directorate(name=payload.name)
     db.add(directorate)
     db.commit()
     db.refresh(directorate)
     return directorate
 
-@router.put("/directorates/{id}", response_model=DirectorateOut)
-def update_directorate(id: int, payload: DirectorateUpdate, db: Session = Depends(get_db), current_dept = Depends(require_admin_dept)):
+@router.put("/{id}", response_model=DirectorateOut)
+def update_directorate(
+    id: int, 
+    payload: DirectorateUpdate, 
+    db: Session = Depends(get_db), 
+    #current_dept = Depends(require_admin_dept)
+    ):
     directorate = db.query(Directorate).filter(Directorate.id == id).first()
     if not directorate:
         raise HTTPException(status_code=404, detail="Directorate not found")
@@ -40,8 +49,12 @@ def update_directorate(id: int, payload: DirectorateUpdate, db: Session = Depend
     db.refresh(directorate)
     return directorate
 
-@router.delete("/directorates/{id}", response_model=dict)
-def delete_directorate(id: int, db: Session = Depends(get_db), current_dept = Depends(require_admin_dept)):
+@router.delete("/{id}", response_model=dict)
+def delete_directorate(
+    id: int, 
+    db: Session = Depends(get_db), 
+    #current_dept = Depends(require_admin_dept)
+    ):
     directorate = db.query(Directorate).filter(Directorate.id == id).first()
     if not directorate:
         raise HTTPException(status_code=404, detail="Directorate not found")
