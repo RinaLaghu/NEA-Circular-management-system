@@ -5,7 +5,7 @@ import bcrypt
 from app.db.database import get_db
 from app.models.dept import Department
 from app.schemas.dept import DepartmentCreate, DepartmentUpdate, DepartmentOut
-from app.deps.auth import require_admin_dept
+from app.deps.auth import get_current_admin
 
 router = APIRouter()
 

@@ -16,7 +16,7 @@ def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
 
     dept = db.query(Department).filter(
         Department.name == data.name,
-        Department.directorate_id == data.directorate_id  
+        Department.directorate.has(name=data.directorate)
     ).first()
 
     if not dept:
@@ -49,7 +49,7 @@ def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "message": "Login successful",
-        "directorate": dept.directorate_id,
+        "directorate": dept.directorate.name,
         "department": dept.name,
         "department_id": dept.id
     }
@@ -61,7 +61,7 @@ def update_password(data: DepartmentLogin, db: Session = Depends(get_db)):
 
     dept = db.query(Department).filter(
         Department.name == data.name,
-        Department.directorate_id == data.directorate_id
+        Department.directorate.has(name=data.directorate)
     ).first()
 
     if not dept:
@@ -81,7 +81,7 @@ def force_reset_password(data: DepartmentLogin, db: Session = Depends(get_db)):
     """
     dept = db.query(Department).filter(
         Department.name == data.name,
-        Department.directorate_id == data.directorate_id
+        Department.directorate.has(name=data.directorate)
     ).first()
 
     if not dept:

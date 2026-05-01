@@ -7,7 +7,7 @@ from app.models.circular import Circular
 
 # existing routers
 from app.api.routes.directorate import router as directorate_router
-from app.api.routes.department_login import router as dept_router
+from app.api.routes.dept_login import router as dept_router
 from app.api.routes.dept_crud import router as dept_crud_router
 from app.api.routes.circular import router as circular_router
 

@@ -1,7 +1,6 @@
-from app.db.database import SessionLocal, engine, Base
+from app.db.database import SessionLocal
 from app.models.directorate import Directorate
 from app.models.dept import Department
-from app.models.user import User
 from app.core.security import hash_password
 
 departments = [
@@ -65,11 +64,9 @@ departments = [
 
 
 def seed_data() -> None:
-    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
         if db.query(Directorate).count() > 0:
-            print("Directorates already seeded")
             return
 
         directorate_map = {}
@@ -87,7 +84,7 @@ def seed_data() -> None:
                 Department(
                     directorate_id=directorate_map[d["directorate"]].id,
                     name=d["name"],
-                    hashed_password=hash_password(d["password"]),
+                    hashed_password=hash_password(d["password"])
                 )
             )
 
