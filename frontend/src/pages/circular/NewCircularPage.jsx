@@ -36,16 +36,19 @@ function NewCircularPage() {
   const wordCount = bodyText.trim() ? bodyText.trim().split(/\s+/).length : 0;
 
   const handleFiles = (fileList) => {
-    const allowed = ["application/pdf", "image/jpeg", "image/png"];
-    const newFiles = Array.from(fileList).map((file) => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-      status: allowed.includes(file.type) ? "ok" : "error",
-      error: allowed.includes(file.type) ? "" : "Only PDF, JPG, PNG allowed",
-    }));
-    setFiles((prev) => [...prev, ...newFiles]);
-  };
+  const allowed = ["application/pdf", "image/jpeg", "image/png"];
+
+  const newFiles = Array.from(fileList).map((file) => ({
+    id: Date.now() + Math.random(),
+    file,
+    name: file.name,
+    size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+    status: allowed.includes(file.type) ? "ok" : "error",
+    error: allowed.includes(file.type) ? "" : "Only PDF, JPG, PNG allowed",
+  }));
+
+  setFiles((prev) => [...prev, ...newFiles]);
+};
 
   const removeFile = (id) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -72,7 +75,43 @@ function NewCircularPage() {
       />
     );
   }
+  const saveDraft = async () => {
+    const formData = new FormData();
 
+    formData.append("subject", circularTitle);
+    formData.append("description", bodyText);
+    formData.append("category", category);
+    formData.append("priority", priority);
+
+    // temporary hardcoded IDs
+    // later replace with logged-in user's department id
+    formData.append("sender_department_id", 1);
+    formData.append("receiver_department_id", 2);
+
+    const validFile = files.find((f) => f.status === "ok");
+
+    if (validFile) {
+      formData.append("file", validFile.file);
+    }
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/circular/draft", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.detail || "Failed to save draft");
+        return;
+      }
+
+      alert("Circular saved as draft");
+      navigate("/drafts");
+    } catch (err) {
+      alert(err.message || "Backend connection failed");
+    }
+  };
   return (
     <PageLayout>
       <div className="nc-header">
@@ -309,6 +348,9 @@ function NewCircularPage() {
           </button>
           <button type="button" className="nc-primary-btn">
             ➤ Send Circular
+          </button>
+          <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
+            Save as Draft
           </button>
         </div>
       </div>
