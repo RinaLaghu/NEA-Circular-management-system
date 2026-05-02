@@ -1302,6 +1302,12 @@ input {
   margin-bottom: 18px;
 }
 
+.card-action-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .nc-field-label,
 .nc-section-mini-title,
 .nc-attach-title {

@@ -54,12 +54,6 @@ async def create_draft_circular(
     if not receiver:
         raise HTTPException(status_code=404, detail="Receiver department not found")
 
-    if not validate_routing(sender, receiver):
-        raise HTTPException(
-            status_code=403,
-            detail="Routing blocked: regular departments cannot send circulars directly"
-        )
-
     file_url = None
 
     if file:
@@ -121,6 +115,11 @@ def list_drafts(db: Session = Depends(get_db)):
     return db.query(Circular).filter(Circular.status == "draft").all()
 
 
+@router.get("/archive")
+def list_archived_circulars(db: Session = Depends(get_db)):
+    return db.query(Circular).filter(Circular.is_archived == True).all()
+
+
 @router.get("/{circular_id}")
 def get_circular(circular_id: int, db: Session = Depends(get_db)):
     circular = db.query(Circular).filter(Circular.id == circular_id).first()
@@ -156,9 +155,6 @@ async def update_circular(
 
     if not sender or not receiver:
         raise HTTPException(status_code=404, detail="Sender or receiver department not found")
-
-    if not validate_routing(sender, receiver):
-        raise HTTPException(status_code=403, detail="Routing blocked")
 
     circular.subject = subject
     circular.description = description
@@ -209,6 +205,18 @@ def send_circular(circular_id: int, db: Session = Depends(get_db)):
 
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
+
+    sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+    receiver = db.query(Department).filter(Department.id == circular.receiver_department_id).first()
+
+    if not sender or not receiver:
+        raise HTTPException(status_code=404, detail="Sender or receiver department not found")
+
+    if not validate_routing(sender, receiver):
+        raise HTTPException(
+            status_code=403,
+            detail="Routing blocked: regular departments cannot send circulars directly"
+        )
 
     circular.status = "unread"
     db.commit()
