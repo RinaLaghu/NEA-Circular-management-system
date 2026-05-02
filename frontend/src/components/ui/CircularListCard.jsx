@@ -6,6 +6,9 @@ function CircularListCard({
   tagType = "routine",
   date,
   actionLabel,
+  onAction,
+  secondActionLabel,
+  onSecondAction,
 }) {
   return (
     <div className="circular-list-card">
@@ -19,11 +22,25 @@ function CircularListCard({
       </div>
 
       <div className="circular-list-right">
-        <span className={`priority-badge priority-${tagType}`}>{tag}</span>
+        <span className={`priority-badge priority-${tagType}`}>
+          {tag}
+        </span>
 
         {date && <span className="list-date">{date}</span>}
 
-        {actionLabel && <button className="mini-action-btn">{actionLabel}</button>}
+        <div className="card-action-row">
+          {actionLabel && (
+            <button className="mini-action-btn" onClick={onAction}>
+              {actionLabel}
+            </button>
+          )}
+
+          {secondActionLabel && (
+            <button className="mini-action-btn" onClick={onSecondAction}>
+              {secondActionLabel}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

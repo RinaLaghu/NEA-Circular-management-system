@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import CircularPreviewPage from "@/pages/circular/CircularPreviewPage";
-import { useNavigate } from "react-router-dom"; 
-
+import { useNavigate, useSearchParams } from "react-router-dom";
 const INTERNAL_DEPTS = [
   { id: "hr", name: "Human Resource", desc: "Ensures Labor law" },
   { id: "legal", name: "Legal Affairs", desc: "Policy verification unit" },
@@ -17,6 +16,8 @@ const EXTERNAL_DEPTS = [
 ];
 
 function NewCircularPage() {
+  const [searchParams] = useSearchParams();
+  const draftId = searchParams.get("draftId");
   const [circularTitle, setCircularTitle] = useState("");
   const [category, setCategory] = useState("Administrative Policy");
   const [priority, setPriority] = useState("urgent");
@@ -26,6 +27,20 @@ function NewCircularPage() {
   const [files, setFiles] = useState([]);
   const [showPreview, setShowPreview] = useState(false); // NEW
   const navigate = useNavigate(); // NEW
+
+  useEffect(() => {
+    if (draftId) {
+      fetch(`http://127.0.0.1:8000/circular/${draftId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setCircularTitle(data.subject || "");
+          setBodyText(data.description || "");
+          setCategory(data.category || "Administrative Policy");
+          setPriority(data.priority || "routine");
+        })
+        .catch((err) => console.error("Failed to load draft:", err));
+    }
+  }, [draftId]);
 
   const toggleExternal = (id) => {
     setSelectedExternal((prev) =>
@@ -336,7 +351,7 @@ function NewCircularPage() {
           Draft auto-saved at 11:24 AM
         </div>
         <div className="nc-footer-actions">
-          <button type="button" className="nc-secondary-btn" onClick={() => navigate("/drafts")}>
+          <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
             Save as Draft
           </button>
           <button
@@ -349,9 +364,7 @@ function NewCircularPage() {
           <button type="button" className="nc-primary-btn">
             ➤ Send Circular
           </button>
-          <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
-            Save as Draft
-          </button>
+          
         </div>
       </div>
     </PageLayout>
