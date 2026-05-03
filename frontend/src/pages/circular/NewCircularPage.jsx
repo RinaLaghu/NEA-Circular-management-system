@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import CircularPreviewPage from "@/pages/circular/CircularPreviewPage";
 import { useNavigate, useSearchParams } from "react-router-dom";
+
 const INTERNAL_DEPTS = [
   { id: "hr", name: "Human Resource", desc: "Ensures Labor law" },
   { id: "legal", name: "Legal Affairs", desc: "Policy verification unit" },
@@ -16,8 +17,10 @@ const EXTERNAL_DEPTS = [
 ];
 
 function NewCircularPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftId = searchParams.get("draftId");
+
   const [circularTitle, setCircularTitle] = useState("");
   const [category, setCategory] = useState("Administrative Policy");
   const [priority, setPriority] = useState("urgent");
@@ -25,21 +28,20 @@ function NewCircularPage() {
   const [selectedExternal, setSelectedExternal] = useState(["gen"]);
   const [bodyText, setBodyText] = useState("");
   const [files, setFiles] = useState([]);
-  const [showPreview, setShowPreview] = useState(false); // NEW
-  const navigate = useNavigate(); // NEW
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    if (draftId) {
-      fetch(`http://127.0.0.1:8000/circular/${draftId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setCircularTitle(data.subject || "");
-          setBodyText(data.description || "");
-          setCategory(data.category || "Administrative Policy");
-          setPriority(data.priority || "routine");
-        })
-        .catch((err) => console.error("Failed to load draft:", err));
-    }
+    if (!draftId) return;
+
+    fetch(`http://127.0.0.1:8000/circular/${draftId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCircularTitle(data.subject || "");
+        setBodyText(data.description || "");
+        setCategory(data.category || "Administrative Policy");
+        setPriority(data.priority || "routine");
+      })
+      .catch((err) => console.error("Failed to load draft:", err));
   }, [draftId]);
 
   const toggleExternal = (id) => {
@@ -51,25 +53,102 @@ function NewCircularPage() {
   const wordCount = bodyText.trim() ? bodyText.trim().split(/\s+/).length : 0;
 
   const handleFiles = (fileList) => {
-  const allowed = ["application/pdf", "image/jpeg", "image/png"];
+    const allowed = ["application/pdf", "image/jpeg", "image/png"];
 
-  const newFiles = Array.from(fileList).map((file) => ({
-    id: Date.now() + Math.random(),
-    file,
-    name: file.name,
-    size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-    status: allowed.includes(file.type) ? "ok" : "error",
-    error: allowed.includes(file.type) ? "" : "Only PDF, JPG, PNG allowed",
-  }));
+    const newFiles = Array.from(fileList).map((file) => ({
+      id: Date.now() + Math.random(),
+      file,
+      name: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+      status: allowed.includes(file.type) ? "ok" : "error",
+      error: allowed.includes(file.type) ? "" : "Only PDF, JPG, PNG allowed",
+    }));
 
-  setFiles((prev) => [...prev, ...newFiles]);
-};
+    setFiles((prev) => [...prev, ...newFiles]);
+  };
 
   const removeFile = (id) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
-  // NEW — swap to preview when Preview button clicked
+  const saveDraft = async () => {
+    if (!circularTitle.trim()) {
+      alert("Please enter circular title");
+      return;
+    }
+
+    if (!bodyText.trim()) {
+      alert("Please enter circular description/body");
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("subject", circularTitle);
+    formData.append("description", bodyText);
+    formData.append("category", category);
+    formData.append("priority", priority);
+
+    formData.append("sender_department_id", 1);
+    formData.append("receiver_department_id", 2);
+
+    const validFile = files.find((f) => f.status === "ok");
+
+    if (validFile) {
+      formData.append("file", validFile.file);
+    }
+
+    const apiUrl = draftId
+      ? `http://127.0.0.1:8000/circular/${draftId}`
+      : "http://127.0.0.1:8000/circular/draft";
+
+    const method = draftId ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(apiUrl, {
+        method,
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.detail || "Failed to save draft");
+        return;
+      }
+
+      alert(draftId ? "Draft updated successfully" : "Circular saved as draft");
+      navigate("/drafts");
+    } catch (err) {
+      console.error("Save draft error:", err);
+      alert("Backend connection failed");
+    }
+  };
+
+  const sendCircular = async () => {
+    if (!draftId) {
+      alert("Please save the circular as draft first, then send it from edit mode.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
+        method: "PUT",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.detail || "Failed to send circular");
+        return;
+      }
+
+      alert("Circular sent successfully");
+      navigate("/sent");
+    } catch (err) {
+      console.error("Send circular error:", err);
+      alert("Backend connection failed");
+    }
+  };
+
   if (showPreview) {
     return (
       <CircularPreviewPage
@@ -83,55 +162,16 @@ function NewCircularPage() {
           files,
         }}
         onBack={() => setShowPreview(false)}
-        onSend={() => {
-          alert("Circular sent!"); // replace with your actual send API call
-          setShowPreview(false);
-        }}
+        onSend={sendCircular}
       />
     );
   }
-  const saveDraft = async () => {
-    const formData = new FormData();
 
-    formData.append("subject", circularTitle);
-    formData.append("description", bodyText);
-    formData.append("category", category);
-    formData.append("priority", priority);
-
-    // temporary hardcoded IDs
-    // later replace with logged-in user's department id
-    formData.append("sender_department_id", 1);
-    formData.append("receiver_department_id", 2);
-
-    const validFile = files.find((f) => f.status === "ok");
-
-    if (validFile) {
-      formData.append("file", validFile.file);
-    }
-
-    try {
-      const res = await fetch("http://127.0.0.1:8000/circular/draft", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        alert(error.detail || "Failed to save draft");
-        return;
-      }
-
-      alert("Circular saved as draft");
-      navigate("/drafts");
-    } catch (err) {
-      alert(err.message || "Backend connection failed");
-    }
-  };
   return (
     <PageLayout>
       <div className="nc-header">
         <p className="nc-label">OFFICIAL COMMUNICATION</p>
-        <h1>Compose Circular</h1>
+        <h1>{draftId ? "Edit Draft Circular" : "Compose Circular"}</h1>
       </div>
 
       <div className="nc-layout">
@@ -186,7 +226,9 @@ function NewCircularPage() {
                   <button
                     type="button"
                     className={`nc-priority-btn ${
-                      priority === "confidential" ? "is-active confidential" : ""
+                      priority === "confidential"
+                        ? "is-active confidential"
+                        : ""
                     }`}
                     onClick={() => setPriority("confidential")}
                   >
@@ -237,6 +279,7 @@ function NewCircularPage() {
                 <div className="nc-section-mini-title">EXTERNAL DIRECTORATES</div>
                 {EXTERNAL_DEPTS.map((dept) => {
                   const isSelected = selectedExternal.includes(dept.id);
+
                   return (
                     <button
                       key={dept.id}
@@ -246,7 +289,9 @@ function NewCircularPage() {
                       }`}
                       onClick={() => toggleExternal(dept.id)}
                     >
-                      <span className="nc-check-box">{isSelected ? "✓" : ""}</span>
+                      <span className="nc-check-box">
+                        {isSelected ? "✓" : ""}
+                      </span>
                       <div className="nc-dept-text">
                         <span className="nc-dept-name">{dept.name}</span>
                       </div>
@@ -260,14 +305,23 @@ function NewCircularPage() {
           <div className="nc-card nc-editor-card">
             <div className="nc-editor-toolbar">
               <div className="nc-toolbar-tools">
-                <button type="button" className="nc-tool-btn"><b>B</b></button>
-                <button type="button" className="nc-tool-btn"><i>I</i></button>
-                <button type="button" className="nc-tool-btn">☰</button>
+                <button type="button" className="nc-tool-btn">
+                  <b>B</b>
+                </button>
+                <button type="button" className="nc-tool-btn">
+                  <i>I</i>
+                </button>
+                <button type="button" className="nc-tool-btn">
+                  ☰
+                </button>
                 <div className="nc-tool-divider" />
-                <button type="button" className="nc-tool-btn">🔗</button>
+                <button type="button" className="nc-tool-btn">
+                  🔗
+                </button>
               </div>
               <span className="nc-word-count">WORD COUNT: {wordCount}</span>
             </div>
+
             <textarea
               className="nc-textarea"
               placeholder="Commence drafting the official circular text here. Use precise, authoritative language..."
@@ -281,7 +335,9 @@ function NewCircularPage() {
         <div className="nc-side">
           <div className="nc-card">
             <div className="nc-attach-title">ATTACHMENTS</div>
-            <div className="nc-attach-sub">Official scans and supporting documents.</div>
+            <div className="nc-attach-sub">
+              Official scans and supporting documents.
+            </div>
 
             <div
               className="nc-drop-zone"
@@ -307,23 +363,34 @@ function NewCircularPage() {
             {files.map((file) => (
               <div
                 key={file.id}
-                className={`nc-file-item ${file.status === "error" ? "error" : ""}`}
+                className={`nc-file-item ${
+                  file.status === "error" ? "error" : ""
+                }`}
               >
                 <div className="nc-file-left">
                   <span className="nc-file-icon">
                     {file.status === "ok" ? "📄" : "⚠️"}
                   </span>
                   <div className="nc-file-info">
-                    <div className={`nc-file-name ${file.status === "error" ? "error" : ""}`}>
+                    <div
+                      className={`nc-file-name ${
+                        file.status === "error" ? "error" : ""
+                      }`}
+                    >
                       {file.name}
                     </div>
-                    <div className={`nc-file-meta ${file.status === "error" ? "error" : ""}`}>
+                    <div
+                      className={`nc-file-meta ${
+                        file.status === "error" ? "error" : ""
+                      }`}
+                    >
                       {file.status === "ok"
                         ? `${file.size} · Ready to transmit`
                         : `Validation Error: ${file.error}`}
                     </div>
                   </div>
                 </div>
+
                 <button
                   type="button"
                   className="nc-file-remove"
@@ -348,23 +415,25 @@ function NewCircularPage() {
       <div className="nc-footer">
         <div className="nc-autosave">
           <span className="nc-autosave-dot" />
-          Draft auto-saved at 11:24 AM
+          {draftId ? "Editing existing draft" : "Draft auto-saved at 11:24 AM"}
         </div>
+
         <div className="nc-footer-actions">
           <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
-            Save as Draft
+            {draftId ? "Update Draft" : "Save as Draft"}
           </button>
+
           <button
             type="button"
             className="nc-secondary-btn"
-            onClick={() => setShowPreview(true)} // NEW
+            onClick={() => setShowPreview(true)}
           >
             👁 Preview
           </button>
-          <button type="button" className="nc-primary-btn">
+
+          <button type="button" className="nc-primary-btn" onClick={sendCircular}>
             ➤ Send Circular
           </button>
-          
         </div>
       </div>
     </PageLayout>
