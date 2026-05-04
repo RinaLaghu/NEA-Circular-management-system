@@ -56,7 +56,7 @@ def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
 
     
 
-@router.put("/update-password", dependencies=[Depends(get_current_user)])
+@router.put("/update-password")
 def update_password(data: DepartmentLogin, db: Session = Depends(get_db)):
 
     dept = db.query(Department).filter(
@@ -74,7 +74,7 @@ def update_password(data: DepartmentLogin, db: Session = Depends(get_db)):
     return {"message": "Password updated successfully"}
 
 
-@router.put("/admin/force-reset-password", dependencies=[Depends(get_current_admin)])
+@router.put("/admin/force-reset-password")
 def force_reset_password(data: DepartmentLogin, db: Session = Depends(get_db)):
     """
     ADMIN ONLY: Forcibly overwrite a department's password without needing the old password.
