@@ -1,4 +1,4 @@
-import { Send, Inbox, DraftingCompass, Archive, Star, LayoutList, LogOut } from "lucide-react";
+import { Send, Inbox, DraftingCompass, Archive, LayoutList, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo1.png";
 
@@ -9,7 +9,6 @@ function Sidebar() {
 
   const canSendCircular = isLoggedIn;
 
-  // ✅ ADD THIS (THIS WAS MISSING)
   const navItem = (to, icon, label, badge) => (
     <NavLink
       to={to}
@@ -52,12 +51,11 @@ function Sidebar() {
 
         <nav className="sidebar-nav">
 
-          {/* NOT LOGGED IN */}
           {!isLoggedIn ? (
-            <>
-              {navItem("/inbox", <Inbox size={18} />, "Inbox")}
-              {navItem("/all-circulars", <LayoutList size={18} />, "All Circulars")}
-            </>
+            <div className="guest-nav">
+    {navItem("/inbox", <Inbox size={18} />, "Inbox")}
+    {navItem("/all-circulars", <LayoutList size={18} />, "All Circulars")}
+  </div>
           ) : (
             <>
               {navItem("/inbox", <Inbox size={18} />, "Inbox", "12")}
@@ -71,15 +69,10 @@ function Sidebar() {
       </div>
 
       <div style={{ marginTop: "auto" }}>
-        {isLoggedIn ? (
+        {isLoggedIn && (
           <button className="nav-item" onClick={handleLogout}>
             <LogOut size={18} />
             <span>Logout</span>
-          </button>
-        ) : (
-          <button className="nav-item" onClick={() => navigate("/login")}>
-            <LogOut size={18} />
-            <span>Login</span>
           </button>
         )}
       </div>

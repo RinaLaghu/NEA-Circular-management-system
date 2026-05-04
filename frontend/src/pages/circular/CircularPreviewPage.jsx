@@ -47,16 +47,69 @@ function CircularPreviewPage({ data, onBack, onSend }) {
 
   const circularNo = `NEA/ADMIN/${new Date().getFullYear()}`;
 
+const handlePrint = () => {
+  const content = document.getElementById("print-area").innerHTML;
+
+  const win = window.open("", "_blank");
+
+  win.document.write(`
+    <html>
+      <head>
+        <title>Print</title>
+        <style>
+          @page { margin: 10mm; size: A4; }
+
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+
+          body {
+            font-family: Georgia, serif;
+            background: white;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+
+          td {
+            padding: 4px 0;
+            vertical-align: top;
+            font-size: 14px;
+          }
+
+          /* 🔥 Fix blank page issue */
+          #print-area {
+            min-height: auto !important;
+            height: auto !important;
+            page-break-after: avoid;
+          }
+        </style>
+      </head>
+
+      <body onload="window.print(); window.close();">
+        <div id="print-area">
+          ${content}
+        </div>
+      </body>
+    </html>
+  `);
+
+  win.document.close();
+};
+
   return (
     <PageLayout>
-        <div className="nc-header">
-        
+      <div className="nc-header">
         <h1 style={{ fontSize: "1.8rem" }}>Circular Preview</h1>
-        </div>
+      </div>
       <div style={{ background: "var(--color-background-secondary)", minHeight: "100vh", padding: "2rem 1rem" }}>
 
         {/* Notice document */}
-        <div style={{
+        <div id="print-area" style={{
           maxWidth: 720,
           margin: "0 auto",
           background: "var(--color-background-primary)",
@@ -65,8 +118,6 @@ function CircularPreviewPage({ data, onBack, onSend }) {
           fontFamily: "var(--font-sans)",
           overflow: "hidden",
         }}>
-
-    
 
           {/* Blue header band */}
           <div style={{ background: "#1e3a5f", padding: "1.5rem 2.5rem", textAlign: "center" }}>
@@ -154,7 +205,7 @@ function CircularPreviewPage({ data, onBack, onSend }) {
             <div style={{ borderTop: "0.5px solid var(--color-border-tertiary)", marginBottom: "1.5rem" }} />
 
             {/* Body */}
-            <div style={{ fontSize: 14, lineHeight: 2, color: "var(--color-text-primary)", whiteSpace: "pre-wrap", marginBottom: "2rem" , textAlign: "justify"  }}>
+            <div style={{ fontSize: 14, lineHeight: 2, color: "var(--color-text-primary)", whiteSpace: "pre-wrap", marginBottom: "2rem", textAlign: "justify" }}>
               {bodyText || (
                 <span style={{ color: "var(--color-text-tertiary)" }}>No body text entered.</span>
               )}
@@ -218,7 +269,7 @@ function CircularPreviewPage({ data, onBack, onSend }) {
           <button type="button" className="nc-secondary-btn" onClick={onBack}>
             ← Back to Edit
           </button>
-          <button type="button" className="nc-secondary-btn" onClick={() => window.print()}>
+          <button type="button" className="nc-secondary-btn" onClick={handlePrint}>
             🖨 Print
           </button>
           <button type="button" className="nc-primary-btn" onClick={onSend}>

@@ -253,6 +253,12 @@ input {
   margin-top: 20px;
   cursor: pointer;
 }
+.guest-nav {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .dashboard-main {
   flex: 1;
@@ -263,14 +269,14 @@ input {
   z-index: 1; /* goes under sidebar */
   margin-left: -10px; 
 }
-
 .topbar {
   height: 68px;
   background: #f8fafc;
   border-bottom: 1px solid #e5e7eb;
   padding: 0 24px;
+
   display: flex;
-  align-items: center;
+  align-items: center;        /* ✅ FIX: center everything vertically */
   justify-content: space-between;
 }
 
@@ -278,12 +284,41 @@ input {
   font-size: 26px;
   color: #0d3b66;
   font-weight: 700;
+  margin: 0;
+  line-height: 1;
 }
 
 .topbar-right {
   display: flex;
-  align-items: center;
+  align-items: center;        /* ✅ FIX: keep button inside same vertical center */
   gap: 10px;
+}
+
+/* LOGIN BUTTON */
+.login-btn {
+  background-color: #0d3b66;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.2s ease;
+}
+
+.login-btn:hover {
+  background-color: #0b2f52;
+}
+
+.login-btn:active {
+  transform: scale(0.97);
 }
 
 .search-box {
@@ -1682,6 +1717,9 @@ input {
   justify-content: space-between; /* spread evenly */
   width: 100%;  
 }
+
+
+
 
 .nc-priority-btn {
   border: 1px solid #d8e1ec;

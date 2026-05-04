@@ -27,29 +27,6 @@ function AllCircularsPage() {
     );
   });
 
-  // Export CSV
-  const exportToCSV = () => {
-    const headers = ["Subject", "Description", "Date", "Department"];
-
-    const rows = filteredCirculars.map(c => [
-      c.subject,
-      c.description,
-      c.date,
-      c.department
-    ]);
-
-    let csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers, ...rows].map(e => e.join(",")).join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "circulars.csv");
-    document.body.appendChild(link);
-    link.click();
-  };
-
   return (
     <div className="dashboard-layout">
       <Sidebar />
@@ -68,43 +45,45 @@ function AllCircularsPage() {
             </div>
           </div>
 
-          {/* FILTERS + EXPORT */}
           <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              marginBottom: "20px",
-              alignItems: "center",
-              flexWrap: "wrap"
-            }}
-          >
-            <input
-              type="text"
-              placeholder="Search circular..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ padding: "8px", width: "200px" }}
-            />
+  style={{
+    display: "flex",
+    gap: "10px",
+    marginBottom: "20px",
+    alignItems: "center",
+    flexWrap: "nowrap"
+  }}
+>
+  {/* SEARCH */}
+  <input
+    type="text"
+    placeholder="Search circular..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    style={{
+      padding: "8px",
+      width: "250px"
+    }}
+  />
 
-            <select
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              style={{ padding: "8px" }}
-            >
-              <option value="">All Departments</option>
+  {/* DEPARTMENT */}
+  <select
+    value={departmentFilter}
+    onChange={(e) => setDepartmentFilter(e.target.value)}
+    style={{
+      padding: "8px",
+      width: "200px"
+    }}
+  >
+    <option value="">All Departments</option>
 
-              {/* dynamic departments */}
-              {[...new Set(circulars.map(c => c.department))].map(dep => (
-                <option key={dep} value={dep}>
-                  {dep}
-                </option>
-              ))}
-            </select>
-
-            <button onClick={exportToCSV}>
-              Export CSV
-            </button>
-          </div>
+    {[...new Set(circulars.map(c => c.department))].map(dep => (
+      <option key={dep} value={dep}>
+        {dep}
+      </option>
+    ))}
+  </select>
+</div>
 
           {/* TABLE / LIST */}
           <div className="table-section">
