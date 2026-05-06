@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 import os
 import shutil
-
+from app.deps.auth import require_admin_dept
 from app.db.database import get_db
 from app.models.circular import Circular
 from app.models.dept import Department
@@ -248,7 +248,11 @@ def delete_circular(circular_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{circular_id}/send")
-def send_circular(circular_id: int, db: Session = Depends(get_db)):
+def send_circular(
+    circular_id: int,
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(require_admin_dept),
+):
     circular = db.query(Circular).filter(Circular.id == circular_id).first()
 
     if not circular:

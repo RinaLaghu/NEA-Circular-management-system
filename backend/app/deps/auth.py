@@ -1,48 +1,86 @@
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
-from app.core.security import oauth2_scheme
-from app.db.database import get_db
-from app.models.user import User
-
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt.exceptions import InvalidTokenError
+from sqlalchemy.orm import Session
+
 from app.core.settings import get_settings
+from app.deps.db import get_db
+from app.models.dept import Department
 
 settings = get_settings()
 
+# This makes Swagger ask only for token, not username/password
+security = HTTPBearer()
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+
+def get_current_dept(
+    auth: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ):
+    token = auth.credentials
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Could not validate token",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        payload = jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[settings.algorithm],
+        )
+
+        dept_id = payload.get("sub")
+
+        if dept_id is None:
             raise credentials_exception
+
     except InvalidTokenError:
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    dept = db.query(Department).filter(
+        Department.id == int(dept_id)
+    ).first()
 
-    if user is None or not user.is_active:
+    if dept is None:
         raise credentials_exception
 
-    return user
+    return dept
 
 
-def get_current_admin(current_user: User = Depends(get_current_user)):
-    # assuming you add role field later
-    if getattr(current_user, "role", None) != "admin":
+def require_md(current_dept: Department = Depends(get_current_dept)):
+    if not current_dept.is_md:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            detail="MD access required.",
         )
-    return current_user
+
+    return current_dept
+
+
+def require_admin_dept(current_dept: Department = Depends(get_current_dept)):
+    if not current_dept.is_administration:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administration department access required.",
+        )
+
+    return current_dept
+
+
+# aliases for compatibility
+require_sender = require_admin_dept
+get_current_user = get_current_dept
+
+
+def get_current_admin(current_dept: Department = Depends(get_current_dept)):
+    if not current_dept.is_administration:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required.",
+        )
+
+    return current_dept
