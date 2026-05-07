@@ -11,13 +11,44 @@ from app.models.dept import Department
 settings = get_settings()
 
 # This makes Swagger ask only for token, not username/password
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
-
-def get_current_dept(
-    auth: HTTPAuthorizationCredentials = Depends(security),
+def get_current_dept_optional(
+    auth: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db),
 ):
+    if not auth:
+        return None
+        
+    token = auth.credentials
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[settings.algorithm],
+        )
+
+        dept_id = payload.get("sub")
+        if dept_id is None:
+            return None
+    except InvalidTokenError:
+        return None
+
+    dept = db.query(Department).filter(Department.id == int(dept_id)).first()
+    return dept
+
+def get_current_dept(
+    auth: HTTPAuthorizationCredentials | None = Depends(security),
+    db: Session = Depends(get_db),
+):
+    if not auth:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
     token = auth.credentials
 
     credentials_exception = HTTPException(

@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 import filterIcon from "@/assets/filter.png";
 import downloadIcon from "@/assets/download.png";
 
-function CircularViewer({ circular, onClose, onArchive }) {
+function CircularViewer({ circular, onClose, onArchive, onAcknowledge }) {
   if (!circular) return null;
 
   const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
@@ -25,8 +25,14 @@ function CircularViewer({ circular, onClose, onArchive }) {
           {!isPDF && !isImage && <p>No preview available for this file type</p>}
         </div>
 
-        <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+        <div className="viewer-actions">
           <a href={fileUrl} download className="action-btn">Download</a>
+
+          {circular.status !== "acknowledged" && (
+            <button onClick={() => onAcknowledge(circular.id)} className="action-btn" style={{ backgroundColor: "#28a745" }}>
+              Acknowledge
+            </button>
+          )}
 
           <button onClick={() => onArchive(circular.id)} className="action-btn">
             Archive
@@ -57,13 +63,24 @@ function CircularDashboard() {
   const isLoggedIn = !!localStorage.getItem("token");
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/circular/inbox")
-      .then((res) => res.json())
-      .then((data) => setCirculars(data || []));
+    const token = localStorage.getItem("token");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
 
-    fetch("http://127.0.0.1:8000/circular/stats")
-      .then((res) => res.json())
-      .then((data) => setStats(data || {}));
+    fetch("http://127.0.0.1:8000/circular/inbox", { headers })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed");
+        return res.json();
+      })
+      .then((data) => setCirculars(data || []))
+      .catch(e => console.error(e));
+
+    fetch("http://127.0.0.1:8000/circular/stats", { headers })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed");
+        return res.json();
+      })
+      .then((data) => setStats(data || {}))
+      .catch(e => console.error(e));
   }, []);
 
   // ✅ MARK AS READ WHEN OPENED
@@ -71,9 +88,11 @@ function CircularDashboard() {
     setSelectedCircular(c);
 
     if (c.status === "unread") {
+      const token = localStorage.getItem("token");
+      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
       await fetch(
         `http://127.0.0.1:8000/circular/read/${encodeURIComponent(c.id)}`,
-        { method: "PUT" }
+        { method: "PUT", headers }
       );
 
       setCirculars((prev) =>
@@ -89,10 +108,28 @@ function CircularDashboard() {
     }
   };
 
+  const handleAcknowledge = async (id) => {
+    const token = localStorage.getItem("token");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+    await fetch(
+      `http://127.0.0.1:8000/circular/acknowledge/${encodeURIComponent(id)}`,
+      { method: "PUT", headers }
+    );
+
+    setCirculars((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, status: "acknowledged" } : item
+      )
+    );
+    setSelectedCircular((prev) => prev && prev.id === id ? { ...prev, status: "acknowledged" } : prev);
+  };
+
   const handleArchive = async (id) => {
+    const token = localStorage.getItem("token");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
     await fetch(
       `http://127.0.0.1:8000/circular/archive/${encodeURIComponent(id)}`,
-      { method: "PUT" }
+      { method: "PUT", headers }
     );
 
     setCirculars((prev) => prev.filter((c) => c.id !== id));
@@ -257,6 +294,7 @@ function CircularDashboard() {
               circular={selectedCircular}
               onClose={() => setSelectedCircular(null)}
               onArchive={handleArchive}
+              onAcknowledge={handleAcknowledge}
             />
           )}
 
