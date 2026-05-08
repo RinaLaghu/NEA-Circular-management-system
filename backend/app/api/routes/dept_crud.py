@@ -7,7 +7,7 @@ from app.models.dept import Department
 from app.schemas.dept import DepartmentCreate, DepartmentUpdate, DepartmentOut
 from app.deps.auth import get_current_admin
 
-router = APIRouter()
+router = APIRouter(prefix="/department",tags=["Department"])
 
 @router.get("/by-directorate/{id}", response_model=List[DepartmentOut])
 def list_departments_by_directorate(id: int, db: Session = Depends(get_db)):
