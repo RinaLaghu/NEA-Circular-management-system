@@ -83,11 +83,13 @@ def seed_data() -> None:
             db.refresh(directorate)
 
         for d in departments:
+            is_admin = "Administration" in d["name"]
             db.add(
                 Department(
                     directorate_id=directorate_map[d["directorate"]].id,
                     name=d["name"],
                     hashed_password=hash_password(d["password"]),
+                    is_administration=is_admin
                 )
             )
 

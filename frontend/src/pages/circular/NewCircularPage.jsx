@@ -71,6 +71,15 @@ function NewCircularPage() {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
+  const isLoggedIn = !!localStorage.getItem("token");
+  let isAdministration = false;
+  if (isLoggedIn) {
+    try {
+      const deptData = JSON.parse(localStorage.getItem("department"));
+      isAdministration = deptData?.is_administration === true;
+    } catch (e) {}
+  }
+
   const saveDraft = async () => {
     if (!circularTitle.trim()) {
       alert("Please enter circular title");
@@ -89,7 +98,13 @@ function NewCircularPage() {
     formData.append("category", category);
     formData.append("priority", priority);
 
-    formData.append("sender_department_id", 1);
+    let senderId = 1;
+    try {
+      const deptData = JSON.parse(localStorage.getItem("department"));
+      if (deptData?.department_id) senderId = deptData.department_id;
+    } catch (e) {}
+
+    formData.append("sender_department_id", senderId);
     formData.append("receiver_department_id", 2);
 
     const validFile = files.find((f) => f.status === "ok");
@@ -105,9 +120,13 @@ function NewCircularPage() {
     const method = draftId ? "PUT" : "POST";
 
     try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+      
       const res = await fetch(apiUrl, {
         method,
         body: formData,
+        headers,
       });
 
       if (!res.ok) {
@@ -131,8 +150,12 @@ function NewCircularPage() {
     }
 
     try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
       const res = await fetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
         method: "PUT",
+        headers,
       });
 
       if (!res.ok) {
@@ -163,6 +186,7 @@ function NewCircularPage() {
         }}
         onBack={() => setShowPreview(false)}
         onSend={sendCircular}
+        isAdministration={isAdministration}
       />
     );
   }
@@ -431,9 +455,11 @@ function NewCircularPage() {
             👁 Preview
           </button>
 
-          <button type="button" className="nc-primary-btn" onClick={sendCircular}>
-            ➤ Send Circular
-          </button>
+          {isAdministration && (
+            <button type="button" className="nc-primary-btn" onClick={sendCircular}>
+              ➤ Send Circular
+            </button>
+          )}
         </div>
       </div>
     </PageLayout>

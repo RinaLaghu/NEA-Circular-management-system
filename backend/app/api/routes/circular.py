@@ -5,10 +5,13 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 import os
 import shutil
-from app.deps.auth import require_admin_dept
+from sqlalchemy.sql import func
+from app.deps.auth import require_admin_dept, get_current_dept, get_current_dept_optional
 from app.db.database import get_db
 from app.models.circular import Circular
 from app.models.dept import Department
+from app.models.recepient import CircularRecipient
+from app.models.audit_log import AuditLog
 
 router = APIRouter(prefix="/circular", tags=["Circular"])
 
@@ -43,10 +46,7 @@ def validate_routing(sender: Department, receiver: Department):
         return True
 
     if sender.is_administration:
-        if sender.directorate_id == receiver.directorate_id:
-            return True
-        if receiver.is_administration:
-            return True
+        return True
 
     return False
 
@@ -146,16 +146,76 @@ def list_circulars(db: Session = Depends(get_db)):
 
 
 @router.get("/inbox")
-def list_inbox(db: Session = Depends(get_db)):
-    return db.query(Circular).filter(Circular.status != "draft", Circular.is_archived == False).all()
+def list_inbox(db: Session = Depends(get_db), current_dept: Department | None = Depends(get_current_dept_optional)):
+    if not current_dept:
+        circulars = db.query(Circular).filter(
+            Circular.status == "sent",
+            Circular.is_archived == False
+        ).order_by(Circular.created_at.desc()).all()
+        result = []
+        for c in circulars:
+            c_dict = c.__dict__.copy()
+            if "_sa_instance_state" in c_dict:
+                del c_dict["_sa_instance_state"]
+            result.append(c_dict)
+        return result
 
+    recipients = db.query(CircularRecipient).filter(CircularRecipient.department_id == current_dept.id).all()
+    circular_ids = [r.circular_id for r in recipients]
+    
+    if not circular_ids:
+        return []
+
+    circulars = db.query(Circular).filter(
+        Circular.id.in_(circular_ids),
+        Circular.is_archived == False
+    ).order_by(Circular.created_at.desc()).all()
+    
+    result = []
+    for c in circulars:
+        rec = next((r for r in recipients if r.circular_id == c.id), None)
+        c_dict = c.__dict__.copy()
+        if "_sa_instance_state" in c_dict:
+            del c_dict["_sa_instance_state"]
+        c_dict["status"] = rec.status if rec else c.status
+        result.append(c_dict)
+    return result
+
+@router.get("/sent")
+def list_sent(db: Session = Depends(get_db), current_dept: Department = Depends(get_current_dept)):
+    return db.query(Circular).filter(
+        Circular.sender_department_id == current_dept.id,
+        Circular.status == "sent",
+        Circular.is_archived == False
+    ).order_by(Circular.created_at.desc()).all()
 
 @router.get("/stats")
-def get_circular_stats(db: Session = Depends(get_db)):
-    total = db.query(Circular).filter(Circular.status != "draft", Circular.is_archived == False).count()
-    unread = db.query(Circular).filter(Circular.status == "unread", Circular.is_archived == False).count()
+def get_circular_stats(db: Session = Depends(get_db), current_dept: Department | None = Depends(get_current_dept_optional)):
+    if not current_dept:
+        inbox_total = db.query(Circular).filter(
+            Circular.status == "sent",
+            Circular.is_archived == False
+        ).count()
+        return {"total": inbox_total, "unread": 0, "archived": 0, "sent": 0}
+
+    inbox_total = db.query(CircularRecipient).filter(
+        CircularRecipient.department_id == current_dept.id
+    ).count()
+    
+    unread = db.query(CircularRecipient).filter(
+        CircularRecipient.department_id == current_dept.id,
+        CircularRecipient.status == "unread"
+    ).count()
+    
+    sent_total = db.query(Circular).filter(
+        Circular.sender_department_id == current_dept.id,
+        Circular.status == "sent",
+        Circular.is_archived == False
+    ).count()
+
     archived = db.query(Circular).filter(Circular.is_archived == True).count()
-    return {"total": total, "unread": unread, "archived": archived}
+    
+    return {"total": inbox_total, "unread": unread, "archived": archived, "sent": sent_total}
 
 
 @router.get("/drafts")
@@ -257,6 +317,9 @@ def send_circular(
 
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
+        
+    if circular.status != "draft":
+        raise HTTPException(status_code=400, detail="Circular is not a draft")
 
     sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
     receiver = db.query(Department).filter(Department.id == circular.receiver_department_id).first()
@@ -270,24 +333,88 @@ def send_circular(
             detail="Routing blocked: regular departments cannot send circulars directly"
         )
 
-    circular.status = "unread"
+    circular.status = "sent"
+    
+    all_depts = db.query(Department).filter(Department.id != current_dept.id).all()
+    for d in all_depts:
+        recipient = CircularRecipient(
+            circular_id=circular.id,
+            department_id=d.id,
+            status="unread"
+        )
+        db.add(recipient)
+    
+    audit_log = AuditLog(
+        circular_id=circular.id,
+        actor_id=current_dept.id,
+        action="sent"
+    )
+    db.add(audit_log)
+    
     db.commit()
     db.refresh(circular)
 
     return circular
 
 @router.put("/read/{circular_id}")
-def mark_circular_read(circular_id: int, db: Session = Depends(get_db)):
-    circular = db.query(Circular).filter(Circular.id == circular_id).first()
+def mark_circular_read(
+    circular_id: int, 
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept)
+):
+    recipient = db.query(CircularRecipient).filter(
+        CircularRecipient.circular_id == circular_id,
+        CircularRecipient.department_id == current_dept.id
+    ).first()
 
-    if not circular:
-        raise HTTPException(status_code=404, detail="Circular not found")
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient record not found")
 
-    circular.status = "read"
-    db.commit()
-    db.refresh(circular)
+    if recipient.status == "unread":
+        recipient.status = "read"
+        recipient.read_at = func.now()
+        
+        audit_log = AuditLog(
+            circular_id=circular_id,
+            actor_id=current_dept.id,
+            action="read"
+        )
+        db.add(audit_log)
+        
+        db.commit()
+        db.refresh(recipient)
 
-    return circular
+    return recipient
+
+@router.put("/acknowledge/{circular_id}")
+def acknowledge_circular(
+    circular_id: int, 
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept)
+):
+    recipient = db.query(CircularRecipient).filter(
+        CircularRecipient.circular_id == circular_id,
+        CircularRecipient.department_id == current_dept.id
+    ).first()
+
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient record not found")
+
+    if recipient.status != "acknowledged":
+        recipient.status = "acknowledged"
+        recipient.acknowledged_at = func.now()
+        
+        audit_log = AuditLog(
+            circular_id=circular_id,
+            actor_id=current_dept.id,
+            action="acknowledged"
+        )
+        db.add(audit_log)
+        
+        db.commit()
+        db.refresh(recipient)
+
+    return recipient
 
 @router.put("/archive/{circular_id}")
 def archive_circular(circular_id: int, db: Session = Depends(get_db)):
