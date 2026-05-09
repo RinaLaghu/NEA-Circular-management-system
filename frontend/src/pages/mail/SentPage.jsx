@@ -73,7 +73,8 @@ function SentPage() {
                 subtitle={`Ref: ${circular.reference_no || "-"} • ${circular.description || ""}`}
                 tag={(circular.priority || "routine").toUpperCase()}
                 tagType={circular.priority || "routine"}
-                date={new Date(circular.created_at).toLocaleDateString()}
+                date={circular.date || ""}
+                time={circular.time || ""}
               />
             </div>
           ))
