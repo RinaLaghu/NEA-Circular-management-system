@@ -11,7 +11,9 @@ function DraftsPage() {
   useEffect(() => {
   const fetchDrafts = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/circular/drafts");
+      const token = localStorage.getItem("token");
+      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+      const res = await fetch("http://127.0.0.1:8000/circular/drafts", { headers });
       const data = await res.json();
       setDrafts(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -28,8 +30,11 @@ function DraftsPage() {
     if (!confirmDelete) return;
 
     try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
       const res = await fetch(`http://127.0.0.1:8000/circular/${id}`, {
         method: "DELETE",
+        headers
       });
 
       if (!res.ok) {

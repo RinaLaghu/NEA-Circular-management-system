@@ -6,8 +6,15 @@ function Sidebar() {
   const navigate = useNavigate();
 
   const isLoggedIn = !!localStorage.getItem("token");
+  let isAdministration = false;
+  if (isLoggedIn) {
+    try {
+      const deptData = JSON.parse(localStorage.getItem("department"));
+      isAdministration = deptData?.is_administration === true;
+    } catch (e) {}
+  }
 
-  const canSendCircular = isLoggedIn;
+  const canSendCircular = isLoggedIn && isAdministration;
 
   const navItem = (to, icon, label, badge) => (
     <NavLink

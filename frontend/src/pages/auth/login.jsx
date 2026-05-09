@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "@/styles/login.css";
 import { useNavigate } from "react-router-dom";
 import lockIcon from "../../assets/lock.png";
+import logo from "../../assets/logo.png";
 
 function Login() {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ function Login() {
       }
 
       localStorage.setItem("department", JSON.stringify(data));
-      localStorage.setItem("token", "userLoggedIn");
+      localStorage.setItem("token", data.access_token);
       navigate("/inbox");
 
     } catch (err) {
