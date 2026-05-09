@@ -5,6 +5,7 @@ function CircularListCard({
   tag,
   tagType = "routine",
   date,
+  time,
   actionLabel,
   onAction,
   secondActionLabel,
@@ -26,7 +27,12 @@ function CircularListCard({
           {tag}
         </span>
 
-        {date && <span className="list-date">{date}</span>}
+        {date && (
+          <div className="date-cell" style={{ color: '#374151', fontWeight: '600', whiteSpace: 'nowrap' }}>
+            <div>{date}</div>
+            {time && <small style={{ display: 'block', color: '#9ca3af', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>{time}</small>}
+          </div>
+        )}
 
         <div className="card-action-row">
           {actionLabel && (
