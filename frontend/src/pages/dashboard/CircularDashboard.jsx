@@ -7,15 +7,26 @@ import React, { useState, useEffect } from "react";
 
 function CircularDashboard() {
   const [circulars, setCirculars] = useState([]);
+  const [stats, setStats] = useState({ total: 0, unread: 0, archived: 0 });
+
+  const refreshStats = () => {
+    authFetch("http://127.0.0.1:8000/circular/stats")
+      .then((res) => res.json())
+      .then((data) => setStats(data))
+      .catch((e) => console.error("Stats refresh failed:", e));
+  };
 
   useEffect(() => {
     authFetch("http://127.0.0.1:8000/circular/inbox")
       .then((res) => res.json())
       .then((data) => setCirculars(data));
+
+    refreshStats();
   }, []);
 
   const handleArchive = (id) => {
     setCirculars(prev => prev.filter(c => c.id !== id));
+    refreshStats(); // keep stats updated
   };
 
   return (
@@ -36,9 +47,9 @@ function CircularDashboard() {
             </div>
           </div>
           <div className="stats-grid">
-            <StatCard title="Total Received" value="1,284" footer="+12% this month" accent="blue" />
-            <StatCard title="Unread Actions" value="12" footer="2 immediate review req." accent="red" />
-            <StatCard title="Pending Sync" value="08" footer="Last synced 2 minutes ago" accent="gray" />
+            <StatCard title="Total Received" value={stats.total} accent="blue" />
+            <StatCard title="Unread Actions" value={stats.unread} accent="red" />
+            <StatCard title="Archived" value={stats.archived} accent="gray" />
           </div>
           <div className="table-section">
             <div className="table-header">
@@ -48,7 +59,7 @@ function CircularDashboard() {
                 <span className="legend-item"><span className="dot read"></span> Read</span>
               </div>
             </div>
-            <CircularTable circulars={circulars} onArchive={handleArchive}  />
+            <CircularTable circulars={circulars} onArchive={handleArchive} />
           </div>
         </div>
       </div>
