@@ -7,13 +7,17 @@ from app.models.circular import Circular
 
 # existing routers
 from app.api.routes.directorate import router as directorate_router
-from app.api.routes.dept_login import router as dept_router
+from app.api.routes.dept_login import router as dept_login_router
 from app.api.routes.dept_crud import router as dept_crud_router
 from app.api.routes.circular import router as circular_router
 
+# refactored routers for circular-related operations
+from app.api.routes.drafts import router as drafts_router
+from app.api.routes.inbox import router as inbox_router
+from app.api.routes.sent import router as sent_router
+
 # new routers
-from app.api.routers.auth import router as auth_router        # ← add
-from app.api.routes.user import router as users_router      # ← add
+from app.api.routers.auth import router as auth_router        
 
 app = FastAPI(title="NEA Circular Management")
 
@@ -31,9 +35,12 @@ Base.metadata.create_all(bind=engine)
 
 # Include routes
 app.include_router(directorate_router)
-app.include_router(dept_router, prefix="/department")
-app.include_router(dept_crud_router, prefix="/departments")
+app.include_router(dept_login_router)
+app.include_router(dept_crud_router)
+
+# Include refactored routers under /circular prefix
+app.include_router(drafts_router, prefix="/circular")
+app.include_router(inbox_router, prefix="/circular")
+app.include_router(sent_router, prefix="/circular")
 app.include_router(circular_router)
-app.include_router(auth_router, prefix="/api/v1/auth")       
-app.include_router(users_router, prefix="/api/v1/users") 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

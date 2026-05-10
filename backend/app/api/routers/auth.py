@@ -1,42 +1,51 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from datetime import timedelta
 
 from app.db.database import get_db
-from app.models.user import User
+from app.models.dept import Department
+from app.schemas.dept import DepartmentLogin
 from app.core.security import verify_password, create_access_token
+from app.core.settings import get_settings
 
-router = APIRouter(tags=["Auth"])
+router = APIRouter(prefix="/department", tags=["Auth"])
+settings = get_settings()
+
 
 @router.post("/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    # 1. find user by email
-    user = db.query(User).filter(User.email == form_data.username).first()
+def login_department(payload: DepartmentLogin, db: Session = Depends(get_db)):
+    dept = db.query(Department).filter(
+        Department.name == payload.name,
+        Department.directorate.has(name=payload.directorate)
+    ).first()
 
-    # 2. verify password
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
-        )
+    if not dept:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found")
 
-    # 3. check active
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Account is inactive"
-        )
+    if not verify_password(payload.password, dept.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
 
-    # 4. issue real JWT
-    token = create_access_token(data={"sub": str(user.id)})
+    if not dept.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Department inactive")
+
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+
+    token_payload = {
+        "sub": str(dept.id),
+        "role": "admin" if dept.is_administration else "department",
+        "directorate_id": dept.directorate_id,
+        "is_administration": dept.is_administration,
+        "is_md": dept.is_md,
+    }
+
+    access_token = create_access_token(data=token_payload, expires_delta=access_token_expires)
 
     return {
-        "access_token": token,
+        "access_token": access_token,
         "token_type": "bearer",
-        "user_id": user.id,
-        "full_name": user.full_name,
-        "department_id": user.department_id
+        "message": "Login successful",
+        "department_id": dept.id,
+        "department": dept.name,
+        "directorate": dept.directorate.name,
+        "is_administration": dept.is_administration,
     }

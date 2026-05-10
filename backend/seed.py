@@ -1,7 +1,6 @@
 from app.db.database import SessionLocal, engine, Base
 from app.models.directorate import Directorate
 from app.models.dept import Department
-from app.models.user import User
 from app.core.security import hash_password
 
 departments = [
@@ -83,11 +82,13 @@ def seed_data() -> None:
             db.refresh(directorate)
 
         for d in departments:
+            is_admin = "Administration" in d["name"]
             db.add(
                 Department(
                     directorate_id=directorate_map[d["directorate"]].id,
                     name=d["name"],
                     hashed_password=hash_password(d["password"]),
+                    is_administration=is_admin
                 )
             )
 

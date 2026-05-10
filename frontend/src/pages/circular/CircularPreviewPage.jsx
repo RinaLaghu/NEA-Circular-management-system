@@ -1,6 +1,6 @@
 import PageLayout from "@/components/layout/PageLayout";
 
-function CircularPreviewPage({ data, onBack, onSend }) {
+function CircularPreviewPage({ data, onBack, onSend, isAdministration }) {
   const {
     circularTitle,
     category,
@@ -272,9 +272,11 @@ const handlePrint = () => {
           <button type="button" className="nc-secondary-btn" onClick={handlePrint}>
             🖨 Print
           </button>
-          <button type="button" className="nc-primary-btn" onClick={onSend}>
-            ➤ Confirm & Send
-          </button>
+          {isAdministration && (
+            <button type="button" className="nc-primary-btn" onClick={onSend}>
+              ➤ Confirm & Send
+            </button>
+          )}
         </div>
       </div>
     </PageLayout>
