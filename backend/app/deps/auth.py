@@ -107,7 +107,7 @@ require_sender = require_admin_dept
 get_current_user = get_current_dept
 
 
-def get_current_admin(current_dept: Department = Depends(get_current_dept)):
+def get_current_admin(current_dept: Department = Depends(get_current_dept_optional)):
     if not current_dept.is_administration:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -49,7 +49,7 @@ function CircularViewer({ circular, onClose, onArchive, onAcknowledge }) {
 
 function CircularDashboard() {
   const [circulars, setCirculars] = useState([]);
-  const [stats, setStats] = useState({ total: 0, unread: 0, archived: 0 });
+  const [stats, setStats] = useState({ total: 0, unread: 0, archived: 0, sent: 0 });
 
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({
@@ -242,12 +242,12 @@ function CircularDashboard() {
             </div>
           )}
 
-          {/* STATS (UNCHANGED LOGIC) */}
+          {/* STATS */}
           {isLoggedIn && (
             <div className="stats-grid">
               <StatCard title="Total" value={stats.total} />
-              <StatCard title="Unread" value={stats.unread} />
-              <StatCard title="Archived" value={stats.archived} />
+              <StatCard title="Unread" value={stats.unread} accent="red" />
+              <StatCard title="Archived" value={stats.archived} accent="gray" />
             </div>
           )}
 
