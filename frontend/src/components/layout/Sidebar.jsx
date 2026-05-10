@@ -98,14 +98,7 @@ function Sidebar() {
         </nav>
       </div>
 
-      <div style={{ marginTop: "auto" }}>
-        {isLoggedIn && (
-          <button className="nav-item" onClick={handleLogout}>
-            <LogOut size={18} />
-            <span>Logout</span>
-          </button>
-        )}
-      </div>
+     
     </aside>
   );
 }
