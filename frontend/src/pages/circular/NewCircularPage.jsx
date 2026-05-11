@@ -78,7 +78,9 @@ function NewCircularPage() {
     try {
       const deptData = JSON.parse(localStorage.getItem("department"));
       isAdministration = deptData?.is_administration === true;
-    } catch (e) {}
+    } catch {
+      // Ignore parsing errors
+    }
   }
 
   const saveDraft = async () => {
@@ -103,7 +105,9 @@ function NewCircularPage() {
     try {
       const deptData = JSON.parse(localStorage.getItem("department"));
       if (deptData?.department_id) senderId = deptData.department_id;
-    } catch (e) {}
+    } catch {
+      // Ignore parsing errors
+    }
 
     formData.append("sender_department_id", senderId);
     formData.append("receiver_department_id", 2);
