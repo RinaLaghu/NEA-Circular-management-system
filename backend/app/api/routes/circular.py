@@ -193,12 +193,22 @@ def get_circular_stats(
 
 
 @router.get("/{circular_id}")
-def get_circular(circular_id: int, db: Session = Depends(get_db)):
+def get_circular(
+    circular_id: int, 
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept)
+):
     """Get a single circular by ID."""
     circular = db.query(Circular).filter(Circular.id == circular_id).first()
 
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
+
+    # If it is a draft, restrict access to the sender's directorate
+    if circular.status == "draft":
+        sender_dept = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+        if sender_dept and sender_dept.directorate_id != current_dept.directorate_id:
+            raise HTTPException(status_code=403, detail="Cannot access drafts of other directorates")
 
     return circular
 
@@ -214,6 +224,7 @@ async def update_circular(
     receiver_department_id: int = Form(...),
     file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept),
 ):
     """
     Update a circular.
@@ -226,6 +237,10 @@ async def update_circular(
 
     if circular.status != "draft":
         raise HTTPException(status_code=400, detail="Only draft circulars can be edited")
+
+    existing_sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+    if existing_sender and existing_sender.directorate_id != current_dept.directorate_id:
+        raise HTTPException(status_code=403, detail="Cannot edit drafts of other directorates")
 
     sender = db.query(Department).filter(Department.id == sender_department_id).first()
     receiver = db.query(Department).filter(Department.id == receiver_department_id).first()
@@ -258,7 +273,11 @@ async def update_circular(
 
 
 @router.delete("/{circular_id}")
-def delete_circular(circular_id: int, db: Session = Depends(get_db)):
+def delete_circular(
+    circular_id: int, 
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept)
+):
     """
     Delete a circular.
     Only draft circulars can be deleted through this endpoint.
@@ -270,6 +289,10 @@ def delete_circular(circular_id: int, db: Session = Depends(get_db)):
 
     if circular.status != "draft":
         raise HTTPException(status_code=400, detail="Only draft circulars can be deleted")
+
+    sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+    if sender and sender.directorate_id != current_dept.directorate_id:
+        raise HTTPException(status_code=403, detail="Cannot delete drafts of other directorates")
 
     db.delete(circular)
     db.commit()
@@ -438,12 +461,20 @@ def unarchive_circular(circular_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/delete/{circular_id}")
-def permanently_delete_circular(circular_id: int, db: Session = Depends(get_db)):
+def permanently_delete_circular(
+    circular_id: int, 
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept)
+):
     """Permanently delete a circular."""
     circular = db.query(Circular).filter(Circular.id == circular_id).first()
 
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
+
+    sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+    if sender and sender.directorate_id != current_dept.directorate_id:
+        raise HTTPException(status_code=403, detail="Cannot delete circulars belonging to other directorates")
 
     db.delete(circular)
     db.commit()
