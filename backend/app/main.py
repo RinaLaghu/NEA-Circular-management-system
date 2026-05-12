@@ -11,6 +11,11 @@ from app.api.routes.dept_login import router as dept_login_router
 from app.api.routes.dept_crud import router as dept_crud_router
 from app.api.routes.circular import router as circular_router
 
+# refactored routers for circular-related operations
+from app.api.routes.drafts import router as drafts_router
+from app.api.routes.inbox import router as inbox_router
+from app.api.routes.sent import router as sent_router
+
 # new routers
 from app.api.routers.auth import router as auth_router        
 
@@ -32,5 +37,10 @@ Base.metadata.create_all(bind=engine)
 app.include_router(directorate_router)
 app.include_router(dept_login_router)
 app.include_router(dept_crud_router)
-app.include_router(circular_router)    
+
+# Include refactored routers under /circular prefix
+app.include_router(drafts_router, prefix="/circular")
+app.include_router(inbox_router, prefix="/circular")
+app.include_router(sent_router, prefix="/circular")
+app.include_router(circular_router)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

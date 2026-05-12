@@ -1,7 +1,12 @@
 export const authFetch = async (url, options = {}) => {
-  const departmentInfo = JSON.parse(localStorage.getItem("department"));
-  const token = departmentInfo?.access_token;
-  
+  let departmentInfo = {};
+  try {
+    departmentInfo = JSON.parse(localStorage.getItem("department")) || {};
+  } catch (e) {
+    departmentInfo = {};
+  }
+  const token = departmentInfo?.access_token || fallbackToken;
+
   const headers = new Headers(options.headers || {});
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
