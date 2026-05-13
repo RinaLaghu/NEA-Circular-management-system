@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import CircularPreviewPage from "@/pages/circular/CircularPreviewPage";
+import { authFetch } from "@/utils/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const INTERNAL_DEPTS = [
@@ -120,13 +121,9 @@ function NewCircularPage() {
     const method = draftId ? "PUT" : "POST";
 
     try {
-      const token = localStorage.getItem("token");
-      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-      
-      const res = await fetch(apiUrl, {
+      const res = await authFetch(apiUrl, {
         method,
         body: formData,
-        headers,
       });
 
       if (!res.ok) {
@@ -150,12 +147,8 @@ function NewCircularPage() {
     }
 
     try {
-      const token = localStorage.getItem("token");
-      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-
-      const res = await fetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
+      const res = await authFetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
         method: "PUT",
-        headers,
       });
 
       if (!res.ok) {

@@ -2,6 +2,8 @@ import { authFetch } from '@/utils/api';
 import { Search, Bell, CircleHelp, UserCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { LogOut } from "lucide-react";
+
 
 function Topbar() {
   const navigate = useNavigate();
@@ -47,9 +49,12 @@ const [showProfile, setShowProfile] = useState(false);
 
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  localStorage.removeItem("token");
+  localStorage.removeItem("department");
+  navigate("/login");
+};
+
+
 
   return (
     <header className="topbar">
@@ -86,6 +91,12 @@ const [showProfile, setShowProfile] = useState(false);
       </div>
 
       {/* LOGOUT */}
+
+      {isLoggedIn && (
+  <button className="logout-btn" onClick={handleLogout}>
+    Logout
+  </button>
+)}
       
     </>
   )}

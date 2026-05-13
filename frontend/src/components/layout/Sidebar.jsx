@@ -1,5 +1,6 @@
 import { Send, Inbox, DraftingCompass, Archive, LayoutList, LogOut } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import logo from "@/assets/logo1.png";
 
 function Sidebar() {
@@ -15,6 +16,8 @@ function Sidebar() {
   }
 
   const canSendCircular = isLoggedIn && isAdministration;
+  const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const navItem = (to, icon, label, badge) => (
     <NavLink
@@ -25,9 +28,32 @@ function Sidebar() {
     >
       {icon}
       <span>{label}</span>
-      {badge && <span className="badge">{badge}</span>}
+      {badge != null && <span className="badge">{badge}</span>}
     </NavLink>
   );
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const fetchStats = async () => {
+      try {
+        // ✅ FIX: use token directly from localStorage
+        const token = localStorage.getItem("token");
+        const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+        const res = await fetch("http://127.0.0.1:8000/circular/stats", { headers });
+        if (!res.ok) return;
+        const data = await res.json();
+        setUnreadCount(data.unread || 0);
+      } catch (err) {
+        console.error("Failed to load sidebar stats:", err);
+      }
+    };
+
+    fetchStats();
+  }, [isLoggedIn, location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -38,7 +64,6 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div>
-
         <div className="sidebar-logo">
           <img src={logo} alt="NEA Logo" className="logo-img" />
           <div>
@@ -57,32 +82,23 @@ function Sidebar() {
         )}
 
         <nav className="sidebar-nav">
-
           {!isLoggedIn ? (
             <div className="guest-nav">
-    {navItem("/inbox", <Inbox size={18} />, "Inbox")}
-    {navItem("/all-circulars", <LayoutList size={18} />, "All Circulars")}
-  </div>
+              {navItem("/inbox", <Inbox size={18} />, "Inbox")}
+              {navItem("/all-circulars", <LayoutList size={18} />, "All Circulars")}
+            </div>
           ) : (
             <>
-              {navItem("/inbox", <Inbox size={18} />, "Inbox", "12")}
+              {navItem("/inbox", <Inbox size={18} />, "Inbox", unreadCount > 0 ? unreadCount : null)}
               {navItem("/sent", <Send size={18} />, "Sent")}
               {navItem("/drafts", <DraftingCompass size={18} />, "Drafts")}
               {navItem("/archive", <Archive size={18} />, "Archive")}
             </>
           )}
-
         </nav>
       </div>
 
-      <div style={{ marginTop: "auto" }}>
-        {isLoggedIn && (
-          <button className="nav-item" onClick={handleLogout}>
-            <LogOut size={18} />
-            <span>Logout</span>
-          </button>
-        )}
-      </div>
+     
     </aside>
   );
 }
