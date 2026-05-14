@@ -165,13 +165,39 @@ function CircularDashboard() {
     return matchPriority && matchDepartment && matchStatus;
   });
 
+  const DIRECTORATE_NAMES = {
+    A: "Planning, Monitoring and IT",
+    B: "Business Development",
+    C: "Administration",
+    D: "Finance",
+    E: "Generation",
+    F: "Transmission",
+    G: "Distribution & Consumer Services",
+    H: "Engineering Service",
+    I: "Project Management",
+    X: "BOARD OF DIRECTORS",
+  };
+
+  const formatDepartmentLabel = (department) => {
+    if (!department) return department;
+
+    const parts = department.split(" - ");
+    const code = parts[0]?.trim();
+    const suffix = parts.slice(1).join(" - ");
+    const directorateName = DIRECTORATE_NAMES[code];
+
+    return directorateName
+      ? `${directorateName}${suffix ? ` - ${suffix}` : ""}`
+      : department;
+  };
+
   const handleExport = () => {
-    const headers = ["ID", "Subject", "Priority", "Department", "Date", "Status"];
+    const headers = ["Reference", "Subject", "Priority", "Department", "Date", "Status"];
     const rows = filtered.map((c) => [
-      c.id,
+      c.reference_no || c.id,
       c.subject,
       c.priority,
-      c.department,
+      formatDepartmentLabel(c.department),
       c.date,
       c.status,
     ]);
