@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import CircularListCard from "@/components/ui/CircularListCard";
 import { useNavigate } from "react-router-dom";
+import { authFetch } from "@/utils/api";
 
 function DraftsPage() {
   const navigate = useNavigate();
@@ -11,9 +12,7 @@ function DraftsPage() {
   useEffect(() => {
   const fetchDrafts = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-      const res = await fetch("http://127.0.0.1:8000/circular/drafts", { headers });
+      const res = await authFetch("http://127.0.0.1:8000/circular/drafts");
       const data = await res.json();
       setDrafts(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -30,11 +29,8 @@ function DraftsPage() {
     if (!confirmDelete) return;
 
     try {
-      const token = localStorage.getItem("token");
-      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-      const res = await fetch(`http://127.0.0.1:8000/circular/${id}`, {
-        method: "DELETE",
-        headers
+      const res = await authFetch(`http://127.0.0.1:8000/circular/delete/${id}`, {
+        method: "DELETE"
       });
 
       if (!res.ok) {
