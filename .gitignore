@@ -99,3 +99,12 @@ Thumbs.db
 *.swp
 *.swo
 backend/app.db 
+
+myenv/
+venv/
+env/
+node_modules/
+__pycache__/
+*.pyc
+dist/
+build/
