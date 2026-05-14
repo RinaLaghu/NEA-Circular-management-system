@@ -202,56 +202,8 @@ function CircularDashboard() {
               <p className="portal-path">PORTAL / <span>INBOX</span></p>
               <h1>Administrative Circular</h1>
             </div>
-
-            {isLoggedIn && (
-              <div className="header-actions">
-                <button
-                  className="action-btn secondary icon-btn"
-                  onClick={() => setShowFilter(!showFilter)}
-                >
-                  <img src={filterIcon} alt="filter" className="btn-icon" />
-                  Filter
-                </button>
-
-                <button className="action-btn secondary icon-btn" onClick={handleExport}>
-                  <img src={downloadIcon} alt="download" className="btn-icon" />
-                  Export
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* FILTER */}
-          {isLoggedIn && showFilter && (
-            <div style={{ display: "flex", gap: "10px" }}>
-              <select
-                value={filters.priority}
-                onChange={(e) =>
-                  setFilters({ ...filters, priority: e.target.value })
-                }
-              >
-                <option value="">Priority</option>
-                <option value="Urgent">Urgent</option>
-                <option value="Routine">Routine</option>
-              </select>
-
-              <input
-                placeholder="Department"
-                value={filters.department}
-                onChange={(e) =>
-                  setFilters({ ...filters, department: e.target.value })
-                }
-              />
-
-              <button
-                onClick={() =>
-                  setFilters({ priority: "", department: "" })
-                }
-              >
-                Clear
-              </button>
-            </div>
-          )}
 
           {/* STATS */}
           {isLoggedIn && (

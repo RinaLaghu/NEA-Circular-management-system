@@ -1,36 +1,25 @@
 import { authFetch } from '@/utils/api';
-import { Search, Bell, CircleHelp, UserCircle2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { LogOut } from "lucide-react";
-
 
 function Topbar() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [showBell, setShowBell] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-const isLoggedIn = !!localStorage.getItem("token");
-const [showProfile, setShowProfile] = useState(false);
-  const bellRef = useRef(null);
-  const profileRef = useRef(null);
+  const isLoggedIn = !!localStorage.getItem("token");
+  const searchRef = useRef(null);
 
-  // Close dropdowns when clicking outside
+  // Close search dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target)) setShowBell(false);
-      if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchResults([]);
+        setSearchQuery("");
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Fetch recent circulars as notifications
-  useEffect(() => {
-    authFetch("http://127.0.0.1:8000/circular/inbox")
-      .then((res) => res.json())
-      .then((data) => setNotifications(data.slice(0, 5))); // latest 5
   }, []);
 
   // Global search
@@ -47,14 +36,11 @@ const [showProfile, setShowProfile] = useState(false);
       });
   }, [searchQuery]);
 
-
   const handleLogout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("department");
-  navigate("/login");
-};
-
-
+    localStorage.removeItem("token");
+    localStorage.removeItem("department");
+    navigate("/inbox");
+  };
 
   return (
     <header className="topbar">
@@ -63,45 +49,72 @@ const [showProfile, setShowProfile] = useState(false);
       </div>
 
       <div className="topbar-right">
+        {!isLoggedIn ? (
+          <button className="login-btn" onClick={() => navigate("/login")}>
+            Login
+          </button>
+        ) : (
+          <>
+            {/* SEARCH */}
+            <div className="search-box" style={{ position: "relative" }} ref={searchRef}>
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search circulars..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
 
-  {!isLoggedIn ? (
-    // 🔴 NOT LOGGED IN
-    <button className="login-btn" onClick={() => navigate("/login")}>
-      Login
-    </button>
-  ) : (
-    // 🟢 LOGGED IN
-    <>
-      {/* SEARCH */}
-      <div className="search-box" style={{ position: "relative" }}>
-        <Search size={16} />
-        <input
-          type="text"
-          placeholder="Search circulars..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+              {/* SEARCH RESULTS DROPDOWN */}
+              {searchResults.length > 0 && (
+                <div style={{
+                  position: "absolute",
+                  top: "110%",
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "#fff",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  zIndex: 1000,
+                  overflow: "hidden"
+                }}>
+                  {searchResults.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => {
+                        navigate("/inbox");
+                        setSearchQuery("");
+                        setSearchResults([]);
+                      }}
+                      style={{
+                        padding: "10px 14px",
+                        cursor: "pointer",
+                        borderBottom: "1px solid #f3f4f6",
+                        transition: "background 0.15s"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f9fafb"}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#fff"}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: "13px", color: "#111" }}>
+                        {c.subject}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>
+                        {c.department} • {c.date}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* LOGOUT */}
+            <button className="logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </>
+        )}
       </div>
-
-      {/* BELL */}
-      <div style={{ position: "relative" }} ref={bellRef}>
-        <button className="icon-btn" onClick={() => setShowBell(!showBell)}>
-          <Bell size={18} />
-        </button>
-      </div>
-
-      {/* LOGOUT */}
-
-      {isLoggedIn && (
-  <button className="logout-btn" onClick={handleLogout}>
-    Logout
-  </button>
-)}
-      
-    </>
-  )}
-
-</div>
     </header>
   );
 }
