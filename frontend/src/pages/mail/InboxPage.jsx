@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 import filterIcon from "@/assets/filter.png";
 import downloadIcon from "@/assets/download.png";
 
-function CircularViewer({ circular, onClose, onArchive, onAcknowledge }) {
+function CircularViewer({ circular, onClose, onArchive, onAcknowledge, isLoggedIn }) {
   if (!circular) return null;
 
   const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
@@ -14,32 +14,43 @@ function CircularViewer({ circular, onClose, onArchive, onAcknowledge }) {
   const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
 
   return (
-    <div className="viewer-overlay">
-      <div className="viewer-box">
-        <h2>{circular.subject}</h2>
-        <p>{circular.description}</p>
+    <div className="viewer-overlay" onClick={onClose}>
+      <div className="viewer-box" style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+        <h2 style={{ borderBottom: "1px solid #eee", paddingBottom: "10px" }}>{circular.subject}</h2>
 
-        <div style={{ marginTop: "20px" }}>
-          {isPDF && <iframe src={fileUrl} width="100%" height="500px" />}
-          {isImage && <img src={fileUrl} alt="preview" style={{ maxWidth: "100%" }} />}
-          {!isPDF && !isImage && <p>No preview available for this file type</p>}
+        <div style={{ margin: "20px 0", fontSize: "15px", lineHeight: "1.6", whiteSpace: "pre-wrap", color: "#333" }}>
+          {circular.description}
         </div>
 
-        <div className="viewer-actions">
-          <a href={fileUrl} download className="action-btn">Download</a>
+        {circular.file_url && (isPDF || isImage) && (
+          <div style={{ marginTop: "30px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
+            <h4 style={{ marginBottom: "15px", color: "#666" }}>Attachment:</h4>
+            {isPDF && <iframe src={fileUrl} width="100%" height="500px" style={{ border: "1px solid #ccc", borderRadius: "4px" }} />}
+            {isImage && <img src={fileUrl} alt="attachment preview" style={{ maxWidth: "100%", borderRadius: "4px", border: "1px solid #ccc" }} />}
+          </div>
+        )}
 
-          {circular.status !== "acknowledged" && (
-            <button onClick={() => onAcknowledge(circular.id)} className="action-btn" style={{ backgroundColor: "#28a745" }}>
-              Acknowledge
-            </button>
+        <div className="viewer-actions">
+          {circular.file_url && (
+            <a href={`http://127.0.0.1:8000/circular/download/${circular.id}`} download className="action-btn">Download</a>
           )}
 
-          <button onClick={() => onArchive(circular.id)} className="action-btn">
-            Archive
-          </button>
+          {isLoggedIn && (
+            <>
+              {circular.status !== "acknowledged" && (
+                <button onClick={() => onAcknowledge(circular.id)} className="action-btn" style={{ backgroundColor: "#28a745" }}>
+                  Acknowledge
+                </button>
+              )}
+
+              <button onClick={() => onArchive(circular.id)} className="action-btn">
+                Archive
+              </button>
+            </>
+          )}
 
           <button onClick={onClose} className="action-btn secondary">
-            Close
+            Cancel
           </button>
         </div>
       </div>
@@ -87,7 +98,7 @@ function CircularDashboard() {
   const handleView = async (c) => {
     setSelectedCircular(c);
 
-    if (c.status === "unread") {
+    if (c.status?.toLowerCase() === "unread") {
       const token = localStorage.getItem("token");
       const headers = token ? { "Authorization": `Bearer ${token}` } : {};
       await fetch(
@@ -194,19 +205,19 @@ function CircularDashboard() {
 
             {isLoggedIn && (
               <div className="header-actions">
-  <button
-    className="action-btn secondary icon-btn"
-    onClick={() => setShowFilter(!showFilter)}
-  >
-    <img src={filterIcon} alt="filter" className="btn-icon" />
-    Filter
-  </button>
+                <button
+                  className="action-btn secondary icon-btn"
+                  onClick={() => setShowFilter(!showFilter)}
+                >
+                  <img src={filterIcon} alt="filter" className="btn-icon" />
+                  Filter
+                </button>
 
-  <button className="action-btn secondary icon-btn" onClick={handleExport}>
-    <img src={downloadIcon} alt="download" className="btn-icon" />
-    Export
-  </button>
-</div>
+                <button className="action-btn secondary icon-btn" onClick={handleExport}>
+                  <img src={downloadIcon} alt="download" className="btn-icon" />
+                  Export
+                </button>
+              </div>
             )}
           </div>
 
@@ -257,27 +268,29 @@ function CircularDashboard() {
               <h3>Inbox / Latest Circulars</h3>
 
               {/* ✅ LEGEND FIXED */}
-              <div className="legend">
-                <span
-                  className={`legend-item ${statusFilter === "unread" ? "active" : ""}`}
-                  onClick={() =>
-                    setStatusFilter(statusFilter === "unread" ? "" : "unread")
-                  }
-                  style={{ cursor: "pointer" }}
-                >
-                  <span className="dot unread"></span> Unread
-                </span>
+              {isLoggedIn && (
+                <div className="legend">
+                  <span
+                    className={`legend-item ${statusFilter === "unread" ? "active" : ""}`}
+                    onClick={() =>
+                      setStatusFilter(statusFilter === "unread" ? "" : "unread")
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span className="dot unread"></span> Unread
+                  </span>
 
-                <span
-                  className={`legend-item ${statusFilter === "read" ? "active" : ""}`}
-                  onClick={() =>
-                    setStatusFilter(statusFilter === "read" ? "" : "read")
-                  }
-                  style={{ cursor: "pointer" }}
-                >
-                  <span className="dot read"></span> Read
-                </span>
-              </div>
+                  <span
+                    className={`legend-item ${statusFilter === "read" ? "active" : ""}`}
+                    onClick={() =>
+                      setStatusFilter(statusFilter === "read" ? "" : "read")
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span className="dot read"></span> Read
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* TABLE */}
@@ -295,6 +308,7 @@ function CircularDashboard() {
               onClose={() => setSelectedCircular(null)}
               onArchive={handleArchive}
               onAcknowledge={handleAcknowledge}
+              isLoggedIn={isLoggedIn}
             />
           )}
 

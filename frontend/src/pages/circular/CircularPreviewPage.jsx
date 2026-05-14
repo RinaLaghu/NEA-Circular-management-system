@@ -7,31 +7,37 @@ function CircularPreviewPage({ data, onBack, onSend, isAdministration }) {
     priority,
     selectedInternal,
     selectedExternal,
+    internalDepts,
+    externalDepts,
     bodyText,
     files,
   } = data;
 
-  const INTERNAL_DEPTS = [
-    { id: "hr", name: "Human Resource" },
-    { id: "legal", name: "Legal Affairs" },
-    { id: "recruit", name: "Recruitment Dept." },
-  ];
+  const internalNames = selectedInternal
+    .map((id) => internalDepts?.find((d) => d.id === id)?.name)
+    .filter(Boolean)
+    .join(", ") || "—";
 
-  const EXTERNAL_DEPTS = [
-    { id: "gen", name: "Generation Directorate" },
-    { id: "trans", name: "Transmission Directorate" },
-    { id: "fin", name: "Finance Directorate" },
-    { id: "pm", name: "Project Management Dir." },
-  ];
+  const DIRECTORATE_NAMES = {
+    "A": "Planning, Monitoring and IT",
+    "B": "Business Development",
+    "C": "Administration",
+    "D": "Finance",
+    "E": "Generation",
+    "F": "Transmission",
+    "G": "Distribution & Consumer Services",
+    "H": "Engineering Service",
+    "I": "Project Management",
+    "X": "BOARD OF DIRECTORS"
+  };
 
-  const internalName =
-    INTERNAL_DEPTS.find((d) => d.id === selectedInternal)?.name || "—";
-
-  const externalNames =
-    selectedExternal
-      .map((id) => EXTERNAL_DEPTS.find((d) => d.id === id)?.name)
-      .filter(Boolean)
-      .join(", ") || "—";
+  const externalNames = selectedExternal
+    .map((id) => {
+      const name = externalDepts?.find((d) => d.id === id)?.name;
+      return name ? (DIRECTORATE_NAMES[name] ? `${name} - ${DIRECTORATE_NAMES[name]}` : name) : null;
+    })
+    .filter(Boolean)
+    .join(", ") || "—";
 
   const priorityStyles = {
     routine: { background: "#E6F1FB", color: "#185FA5" },
@@ -178,7 +184,7 @@ const handlePrint = () => {
                   <td style={tdLabel}>To</td>
                   <td style={tdColon}>:</td>
                   <td style={tdValue}>
-                    {internalName}
+                    {internalNames}
                     {externalNames !== "—" && `, ${externalNames}`}
                   </td>
                 </tr>
@@ -272,11 +278,10 @@ const handlePrint = () => {
           <button type="button" className="nc-secondary-btn" onClick={handlePrint}>
             🖨 Print
           </button>
-          {isAdministration && (
-            <button type="button" className="nc-primary-btn" onClick={onSend}>
-              ➤ Confirm & Send
-            </button>
-          )}
+          {/* All departments can send, no longer restricted to just administration, backend validates permissions */}
+          <button type="button" className="nc-primary-btn" onClick={onSend}>
+            ➤ Confirm & Send
+          </button>
         </div>
       </div>
     </PageLayout>
