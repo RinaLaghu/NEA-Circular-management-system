@@ -64,3 +64,6 @@ def delete_department(id: int, db: Session = Depends(get_db)):
     db.delete(dept)
     db.commit()
     return {"detail": "Department deleted successfully"}
+@router.get("/all", response_model=List[DepartmentOut])
+def list_all_departments(db: Session = Depends(get_db)):
+    return db.query(Department).filter(Department.is_active == True).all()

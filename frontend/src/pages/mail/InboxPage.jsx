@@ -6,33 +6,74 @@ import React, { useState, useEffect } from "react";
 import filterIcon from "@/assets/filter.png";
 import downloadIcon from "@/assets/download.png";
 
-function CircularViewer({ circular, onClose, onArchive, onAcknowledge }) {
+function CircularViewer({ circular, onClose, onArchive}) {
   if (!circular) return null;
 
-  const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
-  const isPDF = circular.file_url?.endsWith(".pdf");
-  const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
+  const rawFileUrl = circular?.file_url || "";
+const fileUrl = rawFileUrl ? `http://127.0.0.1:8000${rawFileUrl}` : null;
 
+const isPDF = rawFileUrl.toLowerCase().includes(".pdf");
+const isImage = /\.(jpg|jpeg|png|gif)$/i.test(rawFileUrl);
+
+  const handleDownload = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(fileUrl, {
+      headers: token
+        ? { Authorization: `Bearer ${token}` }
+        : {},
+    });
+
+    if (!res.ok) throw new Error("Download failed");
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = circular.subject || "circular-file";
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+    alert("Download failed");
+  }
+};
   return (
     <div className="viewer-overlay">
       <div className="viewer-box">
         <h2>{circular.subject}</h2>
         <p>{circular.description}</p>
 
-        <div style={{ marginTop: "20px" }}>
-          {isPDF && <iframe src={fileUrl} width="100%" height="500px" />}
-          {isImage && <img src={fileUrl} alt="preview" style={{ maxWidth: "100%" }} />}
-          {!isPDF && !isImage && <p>No preview available for this file type</p>}
-        </div>
+       <div style={{ marginTop: "20px" }}>
 
+  {/* PDF */}
+  {isPDF && fileUrl && (
+    <iframe src={fileUrl} width="100%" height="500px" />
+  )}
+
+  {/* Image */}
+  {isImage && fileUrl && (
+    <img src={fileUrl} style={{ maxWidth: "100%" }} />
+  )}
+
+  {/* TEXT ONLY (IMPORTANT FIX) */}
+  {!fileUrl && (
+    <div style={{ padding: "20px" }}>
+      <h3>{circular.subject}</h3>
+      <p>{circular.description}</p>
+    </div>
+  )}
+
+</div>
         <div className="viewer-actions">
-          <a href={fileUrl} download className="action-btn">Download</a>
-
-          {circular.status !== "acknowledged" && (
-            <button onClick={() => onAcknowledge(circular.id)} className="action-btn" style={{ backgroundColor: "#28a745" }}>
-              Acknowledge
-            </button>
-          )}
+      <button onClick={handleDownload} className="action-btn">
+  Download
+</button>
 
           <button onClick={() => onArchive(circular.id)} className="action-btn">
             Archive
@@ -50,11 +91,11 @@ function CircularViewer({ circular, onClose, onArchive, onAcknowledge }) {
 function CircularDashboard() {
   const [circulars, setCirculars] = useState([]);
   const [stats, setStats] = useState({ total: 0, unread: 0, archived: 0, sent: 0 });
-
+  const [searchQuery, setSearchQuery] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({
     priority: "",
-    department: ""
+    date: ""
   });
 
   const [statusFilter, setStatusFilter] = useState(""); // ✅ READ/UNREAD TOGGLE
@@ -108,21 +149,7 @@ function CircularDashboard() {
     }
   };
 
-  const handleAcknowledge = async (id) => {
-    const token = localStorage.getItem("token");
-    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-    await fetch(
-      `http://127.0.0.1:8000/circular/acknowledge/${encodeURIComponent(id)}`,
-      { method: "PUT", headers }
-    );
 
-    setCirculars((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: "acknowledged" } : item
-      )
-    );
-    setSelectedCircular((prev) => prev && prev.id === id ? { ...prev, status: "acknowledged" } : prev);
-  };
 
   const handleArchive = async (id) => {
     const token = localStorage.getItem("token");
@@ -137,22 +164,29 @@ function CircularDashboard() {
     setSelectedCircular(null);
   };
 
+
   // ✅ FILTER (UNCHANGED LOGIC, FIXED READ/UNREAD)
   const filtered = circulars.filter((c) => {
-    const matchPriority = filters.priority
-      ? c.priority?.toLowerCase() === filters.priority.toLowerCase()
-      : true;
+  const matchPriority = filters.priority
+    ? c.priority?.toLowerCase() === filters.priority.toLowerCase()
+    : true;
 
-    const matchDepartment = filters.department
-      ? c.department?.toLowerCase().includes(filters.department.toLowerCase())
-      : true;
+  const matchDate = filters.date
+    ? c.date?.includes(filters.date)
+    : true;
 
-    const matchStatus = statusFilter
-      ? c.status?.toLowerCase() === statusFilter
-      : true;
+  const matchStatus = statusFilter
+    ? c.status?.toLowerCase().trim() === statusFilter.toLowerCase()
+    : true;
 
-    return matchPriority && matchDepartment && matchStatus;
-  });
+  const matchSearch = searchQuery.trim()
+    ? c.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.department?.toLowerCase().includes(searchQuery.toLowerCase())
+    : true;
+
+  return matchPriority && matchDate && matchStatus && matchSearch;
+});
 
   const handleExport = () => {
     const headers = ["ID", "Subject", "Priority", "Department", "Date", "Status"];
@@ -181,7 +215,7 @@ function CircularDashboard() {
       <Sidebar />
 
       <div className="dashboard-main">
-        <Topbar />
+       <Topbar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
         <div className="dashboard-content">
 
@@ -219,26 +253,29 @@ function CircularDashboard() {
                   setFilters({ ...filters, priority: e.target.value })
                 }
               >
-                <option value="">Priority</option>
+                <option value=""disabled hidden>Priority</option>
                 <option value="Urgent">Urgent</option>
                 <option value="Routine">Routine</option>
+                <option value="Confidential">Confidential</option>
+
               </select>
 
               <input
-                placeholder="Department"
-                value={filters.department}
-                onChange={(e) =>
-                  setFilters({ ...filters, department: e.target.value })
-                }
-              />
+  type="date"
+  value={filters.date}
+  onChange={(e) =>
+    setFilters({ ...filters, date: e.target.value })
+  }
+/>
 
-              <button
-                onClick={() =>
-                  setFilters({ priority: "", department: "" })
-                }
-              >
-                Clear
-              </button>
+             <button
+  onClick={() => {
+    setFilters({ priority: "", date: "" });
+    setShowFilter(false);
+  }}
+>
+  Clear
+</button>
             </div>
           )}
 
@@ -294,7 +331,6 @@ function CircularDashboard() {
               circular={selectedCircular}
               onClose={() => setSelectedCircular(null)}
               onArchive={handleArchive}
-              onAcknowledge={handleAcknowledge}
             />
           )}
 

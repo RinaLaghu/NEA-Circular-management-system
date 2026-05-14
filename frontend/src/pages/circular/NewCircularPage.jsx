@@ -1,27 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect  ,useMemo } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import CircularPreviewPage from "@/pages/circular/CircularPreviewPage";
 import { authFetch } from "@/utils/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-const INTERNAL_DEPTS = [
-  { id: "hr", name: "Human Resource", desc: "Ensures Labor law" },
-  { id: "legal", name: "Legal Affairs", desc: "Policy verification unit" },
-  { id: "recruit", name: "Recruitment Dept.", desc: "Hiring the right" },
-];
-
-const EXTERNAL_DEPTS = [
-  { id: "gen", name: "Generation Directorate" },
-  { id: "trans", name: "Transmission Directorate" },
-  { id: "fin", name: "Finance Directorate" },
-  { id: "pm", name: "Project Management dir." },
-];
 
 function NewCircularPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftId = searchParams.get("draftId");
-
+  const [departments, setDepartments] = useState([]);
+  const [selectedDeptIds, setSelectedDeptIds] = useState([]);
   const [circularTitle, setCircularTitle] = useState("");
   const [category, setCategory] = useState("Administrative Policy");
   const [priority, setPriority] = useState("urgent");
@@ -30,26 +19,37 @@ function NewCircularPage() {
   const [bodyText, setBodyText] = useState("");
   const [files, setFiles] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [expandedDirectorates, setExpandedDirectorates] = useState([]);
 
   useEffect(() => {
-    if (!draftId) return;
+  fetch("http://127.0.0.1:8000/department/all")
+    .then(res => res.json())
+    .then(data => setDepartments(data))
+    .catch(err => console.error("Failed to load departments:", err));
+}, []);
 
-    fetch(`http://127.0.0.1:8000/circular/${draftId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setCircularTitle(data.subject || "");
-        setBodyText(data.description || "");
-        setCategory(data.category || "Administrative Policy");
-        setPriority(data.priority || "routine");
-      })
-      .catch((err) => console.error("Failed to load draft:", err));
-  }, [draftId]);
+const toggleDept = (id) => {
+  setSelectedDeptIds(prev =>
+    prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+  );
+};
+const toggleExpandDirectorate = (dirId) => {
+  setExpandedDirectorates(prev =>
+    prev.includes(dirId) ? prev.filter(id => id !== dirId) : [...prev, dirId]
+  );
+};
 
-  const toggleExternal = (id) => {
-    setSelectedExternal((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
+const toggleExternalDirectorate = (key) => {
+  setSelectedExternal(prev =>
+    prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+  );
+};
+
+const toggleExternalDept = (key) => {
+  setSelectedExternal(prev =>
+    prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+  );
+};
 
   const wordCount = bodyText.trim() ? bodyText.trim().split(/\s+/).length : 0;
 
@@ -80,6 +80,28 @@ function NewCircularPage() {
       isAdministration = deptData?.is_administration === true;
     } catch (e) {}
   }
+// Add this
+const currentUser = JSON.parse(localStorage.getItem("department"));
+const DIRECTORATE_NAMES = {
+  1: "Planning, Monitoring and IT",
+  2: "Business Development",
+  3: "Administration",
+  4: "Finance",
+  5: "Generation",
+  6: "Transmission",
+  7: "Distribution & Consumer Services",
+  8: "Engineering Service",
+  9: "Project Management",
+};
+const directorates = useMemo(() => {
+  const map = {};
+  departments.forEach(d => {
+    if (d.directorate_id && !map[d.directorate_id]) {
+      map[d.directorate_id] = { id: d.directorate_id, name: d.directorate_name };
+    }
+  });
+  return Object.values(map);
+}, [departments]);
 
   const saveDraft = async () => {
     if (!circularTitle.trim()) {
@@ -91,6 +113,7 @@ function NewCircularPage() {
       alert("Please enter circular description/body");
       return;
     }
+    
 
     const formData = new FormData();
 
@@ -106,7 +129,7 @@ function NewCircularPage() {
     } catch (e) {}
 
     formData.append("sender_department_id", senderId);
-    formData.append("receiver_department_id", 2);
+formData.append("receiver_department_id", selectedDeptIds[0] || "");
 
     const validFile = files.find((f) => f.status === "ok");
 
@@ -140,50 +163,145 @@ function NewCircularPage() {
     }
   };
 
-  const sendCircular = async () => {
-    if (!draftId) {
-      alert("Please save the circular as draft first, then send it from edit mode.");
+  const saveAndSend = async () => {
+  if (!circularTitle.trim()) {
+    alert("Please enter circular title");
+    return;
+  }
+  if (!bodyText.trim()) {
+    alert("Please enter circular body");
+    return;
+  }
+
+  // Build receiver ids
+  const externalDeptIds = selectedExternal
+    .filter(key => key.startsWith("dept_"))
+    .map(key => parseInt(key.replace("dept_", "")));
+
+  const externalDirIds = selectedExternal
+    .filter(key => key.startsWith("dir_"))
+    .map(key => parseInt(key.replace("dir_", "")));
+
+  const dirDeptIds = departments
+    .filter(d => externalDirIds.includes(d.directorate_id))
+    .map(d => d.id);
+
+  const allReceiverIds = [
+    ...new Set([...selectedDeptIds, ...externalDeptIds, ...dirDeptIds])
+  ];
+
+  if (allReceiverIds.length === 0) {
+    alert("Please select at least one recipient department.");
+    return;
+  }
+
+  // Step 1: Save or update draft first to get draftId
+  const formData = new FormData();
+  formData.append("subject", circularTitle);
+  formData.append("description", bodyText);
+  formData.append("category", category);
+  formData.append("priority", priority);
+
+  let senderId = 1;
+  try {
+    const deptData = JSON.parse(localStorage.getItem("department"));
+    if (deptData?.department_id) senderId = deptData.department_id;
+  } catch (e) {}
+
+  formData.append("sender_department_id", senderId);
+  formData.append("receiver_department_id", allReceiverIds[0]);
+
+  const validFile = files.find(f => f.status === "ok");
+  if (validFile) formData.append("file", validFile.file);
+
+  const apiUrl = draftId
+    ? `http://127.0.0.1:8000/circular/${draftId}`
+    : "http://127.0.0.1:8000/circular/draft";
+
+  const method = draftId ? "PUT" : "POST";
+
+  try {
+    const draftRes = await authFetch(apiUrl, { method, body: formData });
+
+    if (!draftRes.ok) {
+      const error = await draftRes.json();
+      alert(error.detail || "Failed to save draft");
       return;
     }
 
-    try {
-      const res = await authFetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
-        method: "PUT",
-      });
+    const draftData = await draftRes.json();
+    const resolvedDraftId = draftId || draftData.id;
 
-      if (!res.ok) {
-        const error = await res.json();
-        alert(error.detail || "Failed to send circular");
-        return;
-      }
+    // Step 2: Send
+    const sendRes = await authFetch(`http://127.0.0.1:8000/circular/${resolvedDraftId}/send`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(allReceiverIds),
+    });
 
-      alert("Circular sent successfully");
-      navigate("/sent");
-    } catch (err) {
-      console.error("Send circular error:", err);
-      alert("Backend connection failed");
+    if (!sendRes.ok) {
+      const error = await sendRes.json();
+      alert(error.detail || "Failed to send circular");
+      return;
     }
-  };
 
-  if (showPreview) {
-    return (
-      <CircularPreviewPage
-        data={{
-          circularTitle,
-          category,
-          priority,
-          selectedInternal,
-          selectedExternal,
-          bodyText,
-          files,
-        }}
-        onBack={() => setShowPreview(false)}
-        onSend={sendCircular}
-        isAdministration={isAdministration}
-      />
-    );
+    alert("Circular sent successfully!");
+    navigate("/sent");
+  } catch (err) {
+    console.error("Send error:", err);
+    alert("Backend connection failed");
+  }
+};
+const sendCircular = async () => {
+  if (!draftId) {
+    alert("Please save as draft first.");
+    return;
   }
 
+console.log("selectedDeptIds:", selectedDeptIds);
+console.log("selectedExternal:", selectedExternal);
+
+  const externalDeptIds = selectedExternal
+    .filter(key => key.startsWith("dept_"))
+    .map(key => parseInt(key.replace("dept_", "")));
+
+  const externalDirIds = selectedExternal
+    .filter(key => key.startsWith("dir_"))
+    .map(key => parseInt(key.replace("dir_", "")));
+
+  const dirDeptIds = departments
+    .filter(d => externalDirIds.includes(d.directorate_id))
+    .map(d => d.id);
+
+  const allReceiverIds = [
+    ...new Set([...selectedDeptIds, ...externalDeptIds, ...dirDeptIds])
+  ];
+
+  if (allReceiverIds.length === 0) {
+    alert("Please select at least one recipient department.");
+    return;
+  }
+
+  try {
+    const res = await authFetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(allReceiverIds),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      alert(error.detail || "Failed to send circular");
+      return;
+    }
+
+    alert("Circular sent successfully!");
+    navigate("/sent");
+  } catch (err) {
+    console.error("Send circular error:", err);
+    alert("Backend connection failed");
+  }
+};
   return (
     <PageLayout>
       <div className="nc-header">
@@ -269,54 +387,88 @@ function NewCircularPage() {
               </span>
             </div>
 
-            <div className="nc-recipient-grid">
-              <div>
-                <div className="nc-section-mini-title">INTERNAL DEPARTMENTS</div>
-                {INTERNAL_DEPTS.map((dept) => (
-                  <button
-                    key={dept.id}
-                    type="button"
-                    className={`nc-dept-card ${
-                      selectedInternal === dept.id ? "selected internal" : ""
-                    }`}
-                    onClick={() => setSelectedInternal(dept.id)}
-                  >
-                    <span className="nc-check-circle">
-                      {selectedInternal === dept.id ? "●" : ""}
-                    </span>
-                    <div className="nc-dept-text">
-                      <span className="nc-dept-name">{dept.name}</span>
-                      <span className="nc-dept-desc">{dept.desc}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+           <div className="nc-recipient-grid">
+  {/* INTERNAL: Only departments in the same directorate as logged-in user */}
+  <div>
+    <div className="nc-section-mini-title">INTERNAL DEPARTMENTS</div>
+    {departments
+      .filter(dept => dept.directorate_id === currentUser?.directorate_id)
+      .map(dept => (
+        <button
+          key={dept.id}
+          type="button"
+          className={`nc-dept-card ${selectedDeptIds.includes(dept.id) ? "selected" : ""}`}
+          onClick={() => toggleDept(dept.id)}
+        >
+          <span className="nc-check-box">
+            {selectedDeptIds.includes(dept.id) ? "✓" : ""}
+          </span>
+          <div className="nc-dept-text">
+            <span className="nc-dept-name">{dept.name}</span>
+          </div>
+        </button>
+      ))}
+  </div>
 
-              <div>
-                <div className="nc-section-mini-title">EXTERNAL DIRECTORATES</div>
-                {EXTERNAL_DEPTS.map((dept) => {
-                  const isSelected = selectedExternal.includes(dept.id);
+  {/* EXTERNAL: Other directorates, expandable */}
+  <div>
+    <div className="nc-section-mini-title">EXTERNAL DIRECTORATES</div>
+    {directorates
+      .filter(dir => dir.id !== currentUser?.directorate_id)
+      .map(dir => {
+        const isWholeSelected = selectedExternal.includes(`dir_${dir.id}`);
+        const isExpanded = expandedDirectorates.includes(dir.id);
+        const depsUnderDir = departments.filter(d => d.directorate_id === dir.id);
 
-                  return (
-                    <button
-                      key={dept.id}
-                      type="button"
-                      className={`nc-dept-card ${
-                        isSelected ? "selected external" : ""
-                      }`}
-                      onClick={() => toggleExternal(dept.id)}
-                    >
-                      <span className="nc-check-box">
-                        {isSelected ? "✓" : ""}
-                      </span>
-                      <div className="nc-dept-text">
-                        <span className="nc-dept-name">{dept.name}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+        return (
+          <div key={dir.id}>
+            {/* Directorate row */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <button
+                type="button"
+                className={`nc-dept-card ${isWholeSelected ? "selected external" : ""}`}
+                onClick={() => toggleExternalDirectorate(`dir_${dir.id}`)}
+                style={{ flex: 1 }}
+              >
+                <span className="nc-check-box">{isWholeSelected ? "✓" : ""}</span>
+                <div className="nc-dept-text">
+                  <span className="nc-dept-name">{dir.name}</span>
+                </div>
+              </button>
+
+              {/* Expand/collapse */}
+              <button
+                type="button"
+                className="nc-tool-btn"
+                onClick={() => toggleExpandDirectorate(dir.id)}
+              >
+                {isExpanded ? "▲" : "▼"}
+              </button>
             </div>
+
+            {/* Expanded departments */}
+            {isExpanded && depsUnderDir.map(dept => {
+              const isDeptSelected = selectedExternal.includes(`dept_${dept.id}`);
+              return (
+                <button
+                  key={dept.id}
+                  type="button"
+                  className={`nc-dept-card ${isDeptSelected ? "selected external" : ""}`}
+                  onClick={() => toggleExternalDept(`dept_${dept.id}`)}
+                  style={{ marginLeft: "20px", marginTop: "4px" }}
+                >
+                  <span className="nc-check-box">{isDeptSelected ? "✓" : ""}</span>
+                  <div className="nc-dept-text">
+                    <span className="nc-dept-name">{dept.name}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
+  </div>
+</div>
           </div>
 
           <div className="nc-card nc-editor-card">
@@ -429,32 +581,25 @@ function NewCircularPage() {
         </div>
       </div>
 
-      <div className="nc-footer">
-        <div className="nc-autosave">
-          <span className="nc-autosave-dot" />
-          {draftId ? "Editing existing draft" : "Draft auto-saved at 11:24 AM"}
-        </div>
+   <div className="nc-footer-actions">
+  <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
+    {draftId ? "Update Draft" : "Save as Draft"}
+  </button>
 
-        <div className="nc-footer-actions">
-          <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
-            {draftId ? "Update Draft" : "Save as Draft"}
-          </button>
+  <button
+    type="button"
+    className="nc-secondary-btn"
+    onClick={() => setShowPreview(true)}
+  >
+    👁 Preview
+  </button>
 
-          <button
-            type="button"
-            className="nc-secondary-btn"
-            onClick={() => setShowPreview(true)}
-          >
-            👁 Preview
-          </button>
-
-          {isAdministration && (
-            <button type="button" className="nc-primary-btn" onClick={sendCircular}>
-              ➤ Send Circular
-            </button>
-          )}
-        </div>
-      </div>
+  {isAdministration && (
+    <button type="button" className="nc-primary-btn" onClick={saveAndSend}>
+      ➤ Send Circular
+    </button>
+  )}
+</div>
     </PageLayout>
   );
 }

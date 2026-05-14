@@ -26,6 +26,11 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showProvinceDropdown, setShowProvinceDropdown] =
+  useState(false);
+
+const [selectedProvince, setSelectedProvince] =
+  useState("");
 
   const handleDirectorateChange = (e) => {
     const value = e.target.value;
@@ -57,9 +62,16 @@ function Login() {
         throw new Error(data.detail || "Login failed");
       }
 
-      localStorage.setItem("department", JSON.stringify(data));
-      localStorage.setItem("token", data.access_token);
-      navigate("/inbox");
+      // AFTER
+const tokenPayload = JSON.parse(atob(data.access_token.split('.')[1]));
+
+localStorage.setItem("department", JSON.stringify({
+  ...data,
+  directorate_id: tokenPayload.directorate_id,  // ✅ extracted from JWT
+  dept_id: tokenPayload.dept_id,
+}));
+localStorage.setItem("token", data.access_token);
+navigate("/inbox");
 
     } catch (err) {
       setError(err.message);
@@ -80,27 +92,103 @@ function Login() {
         <p className="subtitle">AUTHORIZED PERSONNEL ACCESS ONLY</p>
 
         <div className="card">
-          <label>DIRECTORATE</label>
-          <select value={directorate} onChange={handleDirectorateChange}>
-            <option value="" disabled>Select Directorate</option>
-            <option value="X">BOARD OF DIRECTORS</option>
-            <option value="A">Planning, Monitoring and IT</option>
-            <option value="B">Business Development</option>
-            <option value="C">Administration</option>
-            <option value="D">Finance</option>
-            <option value="E">Generation</option>
-            <option value="F">Transmission</option>
-            <option value="G">Distribution & Consumer Services</option>
-            <option value="H">Engineering Service</option>
-            <option value="I">Project Management</option>
-          </select>
+         <label>DIRECTORATE</label>
+
+<select
+  value={directorate}
+  onChange={handleDirectorateChange}
+>
+  <option value="" disabled hidden>
+    Select Directorate
+  </option>
+
+  <option value="X">BOARD OF DIRECTORS</option>
+  <option value="A">Planning, Monitoring and IT</option>
+  <option value="B">Business Development</option>
+  <option value="C">Administration</option>
+  <option value="D">Finance</option>
+  <option value="E">Generation</option>
+  <option value="F">Transmission</option>
+  <option value="G">
+    Distribution & Consumer Services
+  </option>
+  <option value="H">Engineering Service</option>
+  <option value="I">Project Management</option>
+</select>
+
+{/* SHOW ONLY FOR DISTRIBUTION */}
+{directorate === "G" && (
+  <div style={{ marginTop: "12px" }}>
+
+    <button
+      type="button"
+      className="nc-secondary-btn"
+      onClick={() =>
+        setShowProvinceDropdown(
+          !showProvinceDropdown
+        )
+      }
+    >
+      Open Distribution Controls
+    </button>
+
+    {showProvinceDropdown && (
+      <div style={{ marginTop: "10px" }}>
+
+        <label>PROVINCE</label>
+
+        <select
+          value={selectedProvince}
+          onChange={(e) =>
+            setSelectedProvince(e.target.value)
+          }
+        >
+          <option value="" disabled hidden>
+            Select Province
+          </option>
+
+          <option value="Koshi">
+            Koshi Province
+          </option>
+
+          <option value="Madhesh">
+            Madhesh Province
+          </option>
+
+          <option value="Bagmati">
+            Bagmati Province
+          </option>
+
+          <option value="Gandaki">
+            Gandaki Province
+          </option>
+
+          <option value="Lumbini">
+            Lumbini Province
+          </option>
+
+          <option value="Karnali">
+            Karnali Province
+          </option>
+
+          <option value="Sudurpashchim">
+            Sudurpashchim Province
+          </option>
+
+        </select>
+
+      </div>
+    )}
+
+  </div>
+)}
 
           <label>DEPARTMENT</label>
           <select
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
           >
-            <option value="">Select Department</option>
+            <option value="" disabled hidden>Select Department</option>
             {departments.map((dep, index) => (
               <option key={index} value={dep}>{dep}</option>
             ))}

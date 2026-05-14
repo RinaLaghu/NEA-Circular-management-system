@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Request
+from fastapi import APIRouter, Depends, HTTPException,Body, UploadFile, File, Form, Request
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -6,6 +6,10 @@ from datetime import datetime
 import os
 import shutil
 from sqlalchemy.sql import func
+<<<<<<< Updated upstream
+=======
+from typing import List
+>>>>>>> Stashed changes
 from app.deps.auth import require_admin_dept, get_current_dept, get_current_dept_optional
 from app.db.database import get_db
 from app.models.circular import Circular
@@ -336,6 +340,7 @@ def delete_circular(circular_id: int, db: Session = Depends(get_db)):
 @router.put("/{circular_id}/send")
 def send_circular(
     circular_id: int,
+    recipient_ids: List[int] = Body(...), 
     db: Session = Depends(get_db),
     current_dept: Department = Depends(require_admin_dept),
 ):
@@ -360,12 +365,20 @@ def send_circular(
         )
 
     circular.status = "sent"
+<<<<<<< Updated upstream
     
     all_depts = db.query(Department).filter(Department.id != current_dept.id).all()
     for d in all_depts:
+=======
+
+    for dept_id in recipient_ids:
+        dept = db.query(Department).filter(Department.id == dept_id).first()
+        if not dept:
+            continue  # skip invalid ids
+>>>>>>> Stashed changes
         recipient = CircularRecipient(
             circular_id=circular.id,
-            department_id=d.id,
+            department_id=dept_id,
             status="unread"
         )
         db.add(recipient)
