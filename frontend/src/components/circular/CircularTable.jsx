@@ -11,7 +11,7 @@ function CircularTable({
   onDelete,
   mode = "inbox",
 }) {
-    return (
+  return (
     <div className="table-wrapper">
       <table className="circular-table">
 
@@ -34,27 +34,45 @@ function CircularTable({
               {/* MAIN ROW */}
               <tr
                 onClick={() => {
-  onView?.(item);  // ✅ safe — won't crash if not passed
-  setActiveId?.(activeId === item.id ? null : item.id);
-}}
-                style={{ cursor: "pointer" }}
+                  onView?.(item);  // ✅ safe — won't crash if not passed
+                  setActiveId?.(activeId === item.id ? null : item.id);
+                }}
+                className={item.status?.toLowerCase() === "unread" ? "row-unread" : "row-read"}
+                style={{ cursor: "pointer", backgroundColor: item.status?.toLowerCase() === "unread" ? "#fdfdfd" : "inherit" }}
               >
                 <td className="circular-id">{item.id}</td>
 
                 <td>
                   <div className="subject-cell">
-                    <div className="subject-title">{item.subject}</div>
-                    <div className="subject-desc">{item.description}</div>
+                    <div className="subject-title" style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: item.status?.toLowerCase() === "unread" ? 800 : 500, color: item.status?.toLowerCase() === "unread" ? "#000" : "#4b5563" }}>
+                      {item.subject}
+                      {item.status?.toLowerCase() === "unread" && (
+                        <span style={{
+                          backgroundColor: "#e74c3c",
+                          color: "white",
+                          fontSize: "10px",
+                          fontWeight: "bold",
+                          padding: "2px 6px",
+                          borderRadius: "12px",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                          boxShadow: "0 0 8px rgba(231, 76, 60, 0.4)",
+                          animation: "pulse 2s infinite"
+                        }}>New</span>
+                      )}
+                    </div>
+                    <div className="subject-desc" style={{ color: item.status?.toLowerCase() === "unread" ? "#374151" : "#6b7280" }}>
+                      {item.description}
+                    </div>
                   </div>
                 </td>
 
                 <td>
                   <span
-                    className={`priority-badge ${
-                      (item.priority || "").toLowerCase() === "urgent"
+                    className={`priority-badge ${(item.priority || "").toLowerCase() === "urgent"
                         ? "priority-urgent"
                         : "priority-routine"
-                    }`}
+                      }`}
                   >
                     {item.priority}
                   </span>

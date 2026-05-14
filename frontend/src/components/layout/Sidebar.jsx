@@ -15,7 +15,7 @@ function Sidebar() {
     } catch (e) {}
   }
 
-  const canSendCircular = isLoggedIn && isAdministration;
+  const canSendCircular = isLoggedIn;
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 

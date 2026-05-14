@@ -14,6 +14,12 @@ from app.models.dept import Department
 from app.models.directorate import Directorate
 from app.models.recepient import CircularRecipient
 from app.models.audit_log import AuditLog
+from pydantic import BaseModel
+from typing import List
+
+class SendCircularPayload(BaseModel):
+    internal_dept_ids: List[int] = []
+    external_directorate_ids: List[int] = []
 
 router = APIRouter(prefix="/circular", tags=["Circular"])
 
@@ -46,10 +52,19 @@ def generate_reference_no(db: Session):
 
 def validate_routing(sender: Department, receiver: Department):
     """Validate if sender can route to receiver."""
+    # 1. MD can send to anyone
     if sender.is_md:
         return True
-    if sender.is_administration:
+        
+    # 2. Inside single directorate
+    if sender.directorate_id == receiver.directorate_id:
         return True
+        
+    # 3. Between different directorates (Admin A -> Admin B)
+    if sender.directorate_id != receiver.directorate_id:
+        if sender.is_administration and receiver.is_administration:
+            return True
+            
     return False
 
 
@@ -77,31 +92,26 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
         category = form.get("category", "Administrative Policy")
         priority = form.get("priority", "routine")
         sender_department_id = form.get("sender_department_id")
-        receiver_department_id = form.get("receiver_department_id")
         file = form.get("file")
 
-    if not subject or not description or sender_department_id is None or receiver_department_id is None:
+    if not subject or not description or sender_department_id is None:
         raise HTTPException(
             status_code=422,
-            detail="subject, description, sender_department_id, and receiver_department_id are required"
+            detail="subject, description, and sender_department_id are required"
         )
 
     try:
         sender_department_id = int(sender_department_id)
-        receiver_department_id = int(receiver_department_id)
     except (TypeError, ValueError):
         raise HTTPException(
             status_code=422,
-            detail="sender_department_id and receiver_department_id must be integers"
+            detail="sender_department_id must be an integer"
         )
 
     sender = db.query(Department).filter(Department.id == sender_department_id).first()
-    receiver = db.query(Department).filter(Department.id == receiver_department_id).first()
 
     if not sender:
         raise HTTPException(status_code=404, detail="Sender department not found")
-    if not receiver:
-        raise HTTPException(status_code=404, detail="Receiver department not found")
 
     file_url = None
     if file:
@@ -125,7 +135,6 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
         category=category,
         priority=priority,
         sender_department_id=sender_department_id,
-        receiver_department_id=receiver_department_id,
         file_url=file_url,
         status="draft",
     )
@@ -154,6 +163,32 @@ def list_all_circulars(db: Session = Depends(get_db)):
     Used for admin/general viewing.
     """
     return db.query(Circular).all()
+
+@router.get("/recipients")
+def get_allowed_recipients(
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept)
+):
+    """
+    Get allowed internal departments and external directorates for the current department.
+    """
+    if current_dept.is_md:
+        internal_depts = db.query(Department).all()
+        external_directorates = db.query(Directorate).all()
+    else:
+        internal_depts = db.query(Department).filter(
+            Department.directorate_id == current_dept.directorate_id,
+            Department.id != current_dept.id
+        ).all()
+        
+        external_directorates = db.query(Directorate).filter(
+            Directorate.id != current_dept.directorate_id
+        ).all()
+        
+    return {
+        "internal": [{"id": d.id, "name": d.name} for d in internal_depts],
+        "external": [{"id": dir.id, "name": dir.name} for dir in external_directorates]
+    }
 
 @router.get("/stats")
 def get_circular_stats(
@@ -211,7 +246,6 @@ async def update_circular(
     category: str = Form("Administrative Policy"),
     priority: str = Form("routine"),
     sender_department_id: int = Form(...),
-    receiver_department_id: int = Form(...),
     file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
@@ -228,17 +262,14 @@ async def update_circular(
         raise HTTPException(status_code=400, detail="Only draft circulars can be edited")
 
     sender = db.query(Department).filter(Department.id == sender_department_id).first()
-    receiver = db.query(Department).filter(Department.id == receiver_department_id).first()
-
-    if not sender or not receiver:
-        raise HTTPException(status_code=404, detail="Sender or receiver department not found")
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender department not found")
 
     circular.subject = subject
     circular.description = description
     circular.category = category
     circular.priority = priority
     circular.sender_department_id = sender_department_id
-    circular.receiver_department_id = receiver_department_id
 
     if file:
         allowed_types = ["application/pdf", "image/jpeg", "image/png"]
@@ -280,8 +311,9 @@ def delete_circular(circular_id: int, db: Session = Depends(get_db)):
 @router.put("/{circular_id}/send")
 def send_circular(
     circular_id: int,
+    payload: SendCircularPayload,
     db: Session = Depends(get_db),
-    current_dept: Department = Depends(require_admin_dept),
+    current_dept: Department = Depends(get_current_dept),
 ):
     """
     Send a draft circular to all departments.
@@ -296,21 +328,54 @@ def send_circular(
         raise HTTPException(status_code=400, detail="Circular is not a draft")
 
     sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
-    receiver = db.query(Department).filter(Department.id == circular.receiver_department_id).first()
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender department not found")
+        
+    if sender.id != current_dept.id and not current_dept.is_md:
+        raise HTTPException(status_code=403, detail="Cannot send circular on behalf of another department")
 
-    if not sender or not receiver:
-        raise HTTPException(status_code=404, detail="Sender or receiver department not found")
+    target_departments = set()
+    
+    # Process internal departments
+    if payload.internal_dept_ids:
+        depts = db.query(Department).filter(Department.id.in_(payload.internal_dept_ids)).all()
+        for dept in depts:
+            target_departments.add(dept)
+            
+    # Process external directorates
+    if payload.external_directorate_ids:
+        # For each external directorate, find its admin department
+        admins = db.query(Department).filter(
+            Department.directorate_id.in_(payload.external_directorate_ids),
+            Department.is_administration == True
+        ).all()
+        for admin in admins:
+            target_departments.add(admin)
 
-    if not validate_routing(sender, receiver):
+    # Note: MD can send to anyone, but we'll still map directorates to their admin depts
+    # If the user is MD and selects an external directorate, it sends to the admin of that directorate.
+    
+    if not target_departments:
+        raise HTTPException(status_code=400, detail="No valid target departments specified")
+
+    valid_targets = []
+    for target in target_departments:
+        if target.id == current_dept.id:
+            continue # don't send to self
+        if validate_routing(sender, target):
+            valid_targets.append(target)
+            
+    if not valid_targets:
         raise HTTPException(
             status_code=403,
-            detail="Routing blocked: regular departments cannot send circulars directly"
+            detail="Routing blocked: you don't have permission to send to the specified recipients"
         )
 
     circular.status = "sent"
+    if valid_targets:
+        circular.receiver_department_id = valid_targets[0].id
 
-    all_depts = db.query(Department).filter(Department.id != current_dept.id).all()
-    for d in all_depts:
+    for d in valid_targets:
         recipient = CircularRecipient(
             circular_id=circular.id,
             department_id=d.id,
