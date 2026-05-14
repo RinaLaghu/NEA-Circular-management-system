@@ -14,8 +14,12 @@ function NewCircularPage() {
   const [circularTitle, setCircularTitle] = useState("");
   const [category, setCategory] = useState("Administrative Policy");
   const [priority, setPriority] = useState("urgent");
-  const [selectedInternal, setSelectedInternal] = useState("hr");
-  const [selectedExternal, setSelectedExternal] = useState(["gen"]);
+  
+  const [internalDepts, setInternalDepts] = useState([]);
+  const [externalDepts, setExternalDepts] = useState([]);
+  
+  const [selectedInternal, setSelectedInternal] = useState([]);
+  const [selectedExternal, setSelectedExternal] = useState([]);
   const [bodyText, setBodyText] = useState("");
   const [files, setFiles] = useState([]);
   const [showPreview, setShowPreview] = useState(false);

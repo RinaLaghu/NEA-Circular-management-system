@@ -75,12 +75,22 @@ const isImage = /\.(jpg|jpeg|png|gif)$/i.test(rawFileUrl);
   Download
 </button>
 
-          <button onClick={() => onArchive(circular.id)} className="action-btn">
-            Archive
-          </button>
+          {isLoggedIn && (
+            <>
+              {circular.status !== "acknowledged" && (
+                <button onClick={() => onAcknowledge(circular.id)} className="action-btn" style={{ backgroundColor: "#28a745" }}>
+                  Acknowledge
+                </button>
+              )}
+
+              <button onClick={() => onArchive(circular.id)} className="action-btn">
+                Archive
+              </button>
+            </>
+          )}
 
           <button onClick={onClose} className="action-btn secondary">
-            Close
+            Cancel
           </button>
         </div>
       </div>
@@ -128,7 +138,7 @@ function CircularDashboard() {
   const handleView = async (c) => {
     setSelectedCircular(c);
 
-    if (c.status === "unread") {
+    if (c.status?.toLowerCase() === "unread") {
       const token = localStorage.getItem("token");
       const headers = token ? { "Authorization": `Bearer ${token}` } : {};
       await fetch(
@@ -228,19 +238,19 @@ function CircularDashboard() {
 
             {isLoggedIn && (
               <div className="header-actions">
-  <button
-    className="action-btn secondary icon-btn"
-    onClick={() => setShowFilter(!showFilter)}
-  >
-    <img src={filterIcon} alt="filter" className="btn-icon" />
-    Filter
-  </button>
+                <button
+                  className="action-btn secondary icon-btn"
+                  onClick={() => setShowFilter(!showFilter)}
+                >
+                  <img src={filterIcon} alt="filter" className="btn-icon" />
+                  Filter
+                </button>
 
-  <button className="action-btn secondary icon-btn" onClick={handleExport}>
-    <img src={downloadIcon} alt="download" className="btn-icon" />
-    Export
-  </button>
-</div>
+                <button className="action-btn secondary icon-btn" onClick={handleExport}>
+                  <img src={downloadIcon} alt="download" className="btn-icon" />
+                  Export
+                </button>
+              </div>
             )}
           </div>
 
@@ -294,27 +304,29 @@ function CircularDashboard() {
               <h3>Inbox / Latest Circulars</h3>
 
               {/* ✅ LEGEND FIXED */}
-              <div className="legend">
-                <span
-                  className={`legend-item ${statusFilter === "unread" ? "active" : ""}`}
-                  onClick={() =>
-                    setStatusFilter(statusFilter === "unread" ? "" : "unread")
-                  }
-                  style={{ cursor: "pointer" }}
-                >
-                  <span className="dot unread"></span> Unread
-                </span>
+              {isLoggedIn && (
+                <div className="legend">
+                  <span
+                    className={`legend-item ${statusFilter === "unread" ? "active" : ""}`}
+                    onClick={() =>
+                      setStatusFilter(statusFilter === "unread" ? "" : "unread")
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span className="dot unread"></span> Unread
+                  </span>
 
-                <span
-                  className={`legend-item ${statusFilter === "read" ? "active" : ""}`}
-                  onClick={() =>
-                    setStatusFilter(statusFilter === "read" ? "" : "read")
-                  }
-                  style={{ cursor: "pointer" }}
-                >
-                  <span className="dot read"></span> Read
-                </span>
-              </div>
+                  <span
+                    className={`legend-item ${statusFilter === "read" ? "active" : ""}`}
+                    onClick={() =>
+                      setStatusFilter(statusFilter === "read" ? "" : "read")
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span className="dot read"></span> Read
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* TABLE */}

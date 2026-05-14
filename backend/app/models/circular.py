@@ -15,7 +15,7 @@ class Circular(Base):
     priority = Column(String, default="routine")
 
     sender_department_id = Column(Integer, ForeignKey("departments.id"), nullable=False)
-    receiver_department_id = Column(Integer, ForeignKey("departments.id"), nullable=False)
+    receiver_department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
 
     status = Column(String, default="draft")  # draft / sent
     file_url = Column(String, nullable=True)

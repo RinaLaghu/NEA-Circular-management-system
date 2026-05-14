@@ -6,12 +6,15 @@ from app.db.database import get_db
 from app.models.dept import Department
 from app.schemas.dept import DepartmentLogin
 from app.core.security import verify_password, hash_password, create_access_token
-from app.deps.auth import get_current_admin
+from app.deps.auth import get_current_admin, get_current_dept
 from app.core.settings import get_settings
 
 router = APIRouter(prefix="/department", tags=["Auth"])
 settings = get_settings()
 
+@router.get("/me")
+def get_me(current_dept: Department = Depends(get_current_dept)):
+    return current_dept
 
 @router.post("/login")
 def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):

@@ -6,10 +6,6 @@ from datetime import datetime
 import os
 import shutil
 from sqlalchemy.sql import func
-<<<<<<< Updated upstream
-=======
-from typing import List
->>>>>>> Stashed changes
 from app.deps.auth import require_admin_dept, get_current_dept, get_current_dept_optional
 from app.db.database import get_db
 from app.models.circular import Circular
@@ -17,6 +13,12 @@ from app.models.dept import Department
 from app.models.directorate import Directorate
 from app.models.recepient import CircularRecipient
 from app.models.audit_log import AuditLog
+from pydantic import BaseModel
+from typing import List
+
+class SendCircularPayload(BaseModel):
+    internal_dept_ids: List[int] = []
+    external_directorate_ids: List[int] = []
 
 router = APIRouter(prefix="/circular", tags=["Circular"])
 
@@ -76,7 +78,6 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
         category = form.get("category", "Administrative Policy")
         priority = form.get("priority", "routine")
         sender_department_id = form.get("sender_department_id")
-        receiver_department_id = form.get("receiver_department_id")
         file = form.get("file")
 
     if not subject or not description or sender_department_id is None or receiver_department_id is None:
@@ -84,16 +85,15 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
 
     try:
         sender_department_id = int(sender_department_id)
-        receiver_department_id = int(receiver_department_id)
     except (TypeError, ValueError):
         raise HTTPException(status_code=422, detail="sender_department_id and receiver_department_id must be integers")
 
     sender = db.query(Department).filter(Department.id == sender_department_id).first()
-    receiver = db.query(Department).filter(Department.id == receiver_department_id).first()
 
     if not sender:
         raise HTTPException(status_code=404, detail="Sender department not found")
-
+    
+    receiver = db.query(Department).filter(Department.id == receiver_department_id).first()
     if not receiver:
         raise HTTPException(status_code=404, detail="Receiver department not found")
 
@@ -123,7 +123,6 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
         category=category,
         priority=priority,
         sender_department_id=sender_department_id,
-        receiver_department_id=receiver_department_id,
         file_url=file_url,
         status="draft",
     )
@@ -265,6 +264,12 @@ def get_circular(circular_id: int, db: Session = Depends(get_db)):
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
 
+    # If it is a draft, restrict access to the sender's directorate
+    if circular.status == "draft":
+        sender_dept = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+        if sender_dept and sender_dept.directorate_id != current_dept.directorate_id:
+            raise HTTPException(status_code=403, detail="Cannot access drafts of other directorates")
+
     return circular
 
 
@@ -276,9 +281,9 @@ async def update_circular(
     category: str = Form("Administrative Policy"),
     priority: str = Form("routine"),
     sender_department_id: int = Form(...),
-    receiver_department_id: int = Form(...),
     file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept),
 ):
     circular = db.query(Circular).filter(Circular.id == circular_id).first()
 
@@ -288,18 +293,19 @@ async def update_circular(
     if circular.status != "draft":
         raise HTTPException(status_code=400, detail="Only draft circulars can be edited")
 
-    sender = db.query(Department).filter(Department.id == sender_department_id).first()
-    receiver = db.query(Department).filter(Department.id == receiver_department_id).first()
+    existing_sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+    if existing_sender and existing_sender.directorate_id != current_dept.directorate_id:
+        raise HTTPException(status_code=403, detail="Cannot edit drafts of other directorates")
 
-    if not sender or not receiver:
-        raise HTTPException(status_code=404, detail="Sender or receiver department not found")
+    sender = db.query(Department).filter(Department.id == sender_department_id).first()
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender department not found")
 
     circular.subject = subject
     circular.description = description
     circular.category = category
     circular.priority = priority
     circular.sender_department_id = sender_department_id
-    circular.receiver_department_id = receiver_department_id
 
     if file:
         allowed_types = ["application/pdf", "image/jpeg", "image/png"]
@@ -331,6 +337,10 @@ def delete_circular(circular_id: int, db: Session = Depends(get_db)):
     if circular.status != "draft":
         raise HTTPException(status_code=400, detail="Only draft circulars can be deleted")
 
+    sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+    if sender and sender.directorate_id != current_dept.directorate_id:
+        raise HTTPException(status_code=403, detail="Cannot delete drafts of other directorates")
+
     db.delete(circular)
     db.commit()
 
@@ -342,7 +352,7 @@ def send_circular(
     circular_id: int,
     recipient_ids: List[int] = Body(...), 
     db: Session = Depends(get_db),
-    current_dept: Department = Depends(require_admin_dept),
+    current_dept: Department = Depends(get_current_dept),
 ):
     circular = db.query(Circular).filter(Circular.id == circular_id).first()
 
@@ -353,32 +363,58 @@ def send_circular(
         raise HTTPException(status_code=400, detail="Circular is not a draft")
 
     sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
-    receiver = db.query(Department).filter(Department.id == circular.receiver_department_id).first()
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender department not found")
+        
+    if sender.id != current_dept.id and not current_dept.is_md:
+        raise HTTPException(status_code=403, detail="Cannot send circular on behalf of another department")
 
-    if not sender or not receiver:
-        raise HTTPException(status_code=404, detail="Sender or receiver department not found")
+    target_departments = set()
+    
+    # Process internal departments
+    if payload.internal_dept_ids:
+        depts = db.query(Department).filter(Department.id.in_(payload.internal_dept_ids)).all()
+        for dept in depts:
+            target_departments.add(dept)
+            
+    # Process external directorates
+    if payload.external_directorate_ids:
+        # For each external directorate, find its admin department
+        admins = db.query(Department).filter(
+            Department.directorate_id.in_(payload.external_directorate_ids),
+            Department.is_administration == True
+        ).all()
+        for admin in admins:
+            target_departments.add(admin)
 
-    if not validate_routing(sender, receiver):
+    # Note: MD can send to anyone, but we'll still map directorates to their admin depts
+    # If the user is MD and selects an external directorate, it sends to the admin of that directorate.
+    
+    if not target_departments:
+        raise HTTPException(status_code=400, detail="No valid target departments specified")
+
+    valid_targets = []
+    for target in target_departments:
+        if target.id == current_dept.id:
+            continue # don't send to self
+        if validate_routing(sender, target):
+            valid_targets.append(target)
+            
+    if not valid_targets:
         raise HTTPException(
             status_code=403,
-            detail="Routing blocked: regular departments cannot send circulars directly"
+            detail="Routing blocked: you don't have permission to send to the specified recipients"
         )
 
     circular.status = "sent"
-<<<<<<< Updated upstream
     
-    all_depts = db.query(Department).filter(Department.id != current_dept.id).all()
-    for d in all_depts:
-=======
+    if valid_targets:
+        circular.receiver_department_id = valid_targets[0].id
 
-    for dept_id in recipient_ids:
-        dept = db.query(Department).filter(Department.id == dept_id).first()
-        if not dept:
-            continue  # skip invalid ids
->>>>>>> Stashed changes
+    for d in valid_targets:
         recipient = CircularRecipient(
             circular_id=circular.id,
-            department_id=dept_id,
+            department_id=d.id,
             status="unread"
         )
         db.add(recipient)
@@ -487,6 +523,10 @@ def delete_circular(circular_id: int, db: Session = Depends(get_db)):
 
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
+
+    sender = db.query(Department).filter(Department.id == circular.sender_department_id).first()
+    if sender and sender.directorate_id != current_dept.directorate_id:
+        raise HTTPException(status_code=403, detail="Cannot delete circulars belonging to other directorates")
 
     db.delete(circular)
     db.commit()

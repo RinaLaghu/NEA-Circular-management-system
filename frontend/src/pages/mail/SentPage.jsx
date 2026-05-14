@@ -11,19 +11,26 @@ function SentCircularViewer({ circular, onClose }) {
   const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
 
   return (
-    <div className="viewer-overlay">
-      <div className="viewer-box">
-        <h2>{circular.subject}</h2>
-        <p>{circular.description}</p>
-
-        <div style={{ marginTop: "20px" }}>
-          {isPDF && <iframe src={fileUrl} width="100%" height="500px" />}
-          {isImage && <img src={fileUrl} alt="preview" style={{ maxWidth: "100%" }} />}
-          {!isPDF && !isImage && <p>No preview available for this file type</p>}
+    <div className="viewer-overlay" onClick={onClose}>
+      <div className="viewer-box" style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+        <h2 style={{ borderBottom: "1px solid #eee", paddingBottom: "10px" }}>{circular.subject}</h2>
+        
+        <div style={{ margin: "20px 0", fontSize: "15px", lineHeight: "1.6", whiteSpace: "pre-wrap", color: "#333" }}>
+          {circular.description}
         </div>
 
-        <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
-          <a href={fileUrl} download className="action-btn">Download</a>
+        {circular.file_url && (isPDF || isImage) && (
+          <div style={{ marginTop: "30px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
+            <h4 style={{ marginBottom: "15px", color: "#666" }}>Attachment:</h4>
+            {isPDF && <iframe src={fileUrl} width="100%" height="500px" style={{ border: "1px solid #ccc", borderRadius: "4px" }} />}
+            {isImage && <img src={fileUrl} alt="attachment preview" style={{ maxWidth: "100%", borderRadius: "4px", border: "1px solid #ccc" }} />}
+          </div>
+        )}
+
+        <div className="viewer-actions" style={{ marginTop: "20px" }}>
+          {circular.file_url && (
+            <a href={`http://127.0.0.1:8000/circular/download/${circular.id}`} download className="action-btn">Download</a>
+          )}
           <button onClick={onClose} className="action-btn secondary">Close</button>
         </div>
       </div>
