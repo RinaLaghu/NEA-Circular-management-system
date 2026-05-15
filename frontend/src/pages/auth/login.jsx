@@ -26,6 +26,11 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showProvinceDropdown, setShowProvinceDropdown] =
+  useState(false);
+
+const [selectedProvince, setSelectedProvince] =
+  useState("");
 
   const handleDirectorateChange = (e) => {
     const value = e.target.value;
@@ -94,7 +99,72 @@ function Login() {
             <option value="H">Engineering Service</option>
             <option value="I">Project Management</option>
           </select>
+        {/* SHOW ONLY FOR DISTRIBUTION */}
+{directorate === "G" && (
+  <div style={{ marginTop: "12px" }}>
 
+    <button
+      type="button"
+      className="nc-secondary-btn"
+      onClick={() =>
+        setShowProvinceDropdown(
+          !showProvinceDropdown
+        )
+      }
+    >
+      Open Distribution Controls
+    </button>
+
+    {showProvinceDropdown && (
+      <div style={{ marginTop: "10px" }}>
+
+        <label>PROVINCE</label>
+
+        <select
+          value={selectedProvince}
+          onChange={(e) =>
+            setSelectedProvince(e.target.value)
+          }
+        >
+          <option value="" disabled hidden>
+            Select Province
+          </option>
+
+          <option value="Koshi">
+            Koshi Province
+          </option>
+
+          <option value="Madhesh">
+            Madhesh Province
+          </option>
+
+          <option value="Bagmati">
+            Bagmati Province
+          </option>
+
+          <option value="Gandaki">
+            Gandaki Province
+          </option>
+
+          <option value="Lumbini">
+            Lumbini Province
+          </option>
+
+          <option value="Karnali">
+            Karnali Province
+          </option>
+
+          <option value="Sudurpashchim">
+            Sudurpashchim Province
+          </option>
+
+        </select>
+
+      </div>
+    )}
+
+  </div>
+)}
           <label>DEPARTMENT</label>
           <select
             value={selectedDepartment}
