@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, DateTime, JSON
 from sqlalchemy.sql import func
 from app.db.database import Base
 
@@ -15,9 +15,15 @@ class Circular(Base):
     priority = Column(String, default="routine")
 
     sender_department_id = Column(Integer, ForeignKey("departments.id"), nullable=False)
-    receiver_department_id = Column(Integer, ForeignKey("departments.id"), nullable=False)
+    receiver_department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
 
-    status = Column(String, default="draft")  # draft / sent
+    # Store selected recipients for drafts
+    selected_internal_dept_ids = Column(JSON, nullable=True)
+    selected_external_directorate_ids = Column(JSON, nullable=True)
+
+    status = Column(String, default="draft")  # draft / sent / pending_approval / approved
+    approval_status = Column(String, nullable=True)  # pending / approved / rejected
+
     file_url = Column(String, nullable=True)
 
     is_archived = Column(Boolean, default=False)

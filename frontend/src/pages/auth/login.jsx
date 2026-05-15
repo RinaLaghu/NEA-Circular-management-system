@@ -11,13 +11,13 @@ function Login() {
     X: ["NONE"],
     A: ["Corporate Planning and Monitoring", "Power System Management", "Information Technology","Administration Section"],
     B: ["Energy Efficiency and Loss Reduction", "Power Trade", "Company Management","Business Promotion","Administration Section"],
-    C: ["Human Resources", "General Services", "Legal","Recruitment Department"],
-    D: ["Corporation Finance", "Accounts", "Regulatory Compliance","Retirement Fund Management Division"],
+    C: ["Human Resources", "General Services", "Legal","Recruitment Department","Administration Section"],
+    D: ["Corporation Finance", "Accounts", "Regulatory Compliance","Retirement Fund Management Division","Administration Section"],
     E: ["Large Generation Operation and Maintenance", "Medium Generation Operation and Maintenance","Generation Development and Support","Administration Division","Finance Division"],
     F: ["High Voltage Grid Development","Medium Voltage Grid Development","Power System Operation","Grid Operation","Civil Division","Transmission Line and Substation Design Division","Administration Division","Finance Division"],
-    G: ["Planning and Technical Service","Smart Metering and Automation","Community and Rural Electrification"],
-    H: ["Project Development","Environment and Social Studies","Geoeological Investigation"],
-    I: ["Transmission Line and Substation","Distribution Line and Substation","Social Safeguard and Environment Management"]
+    G: ["Planning and Technical Service","Smart Metering and Automation","Community and Rural Electrification","Administration Section"],
+    H: ["Project Development","Environment and Social Studies","Geological Investigation","Administration Section"],
+    I: ["Transmission Line and Substation","Distribution Line and Substation","Social Safeguard and Environment Management","Administration Section"]
   };
 
   const [directorate, setDirectorate] = useState("");
@@ -82,8 +82,8 @@ function Login() {
         <div className="card">
           <label>DIRECTORATE</label>
           <select value={directorate} onChange={handleDirectorateChange}>
-            <option value="" disabled>Select Directorate</option>
-            <option value="X">BOARD OF DIRECTORS</option>
+            <option value="" hidden>Select Directorate</option>
+            <option value="X">Managing Director</option>
             <option value="A">Planning, Monitoring and IT</option>
             <option value="B">Business Development</option>
             <option value="C">Administration</option>
@@ -100,7 +100,7 @@ function Login() {
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
           >
-            <option value="">Select Department</option>
+            <option value="" hidden>Select Department</option>
             {departments.map((dep, index) => (
               <option key={index} value={dep}>{dep}</option>
             ))}

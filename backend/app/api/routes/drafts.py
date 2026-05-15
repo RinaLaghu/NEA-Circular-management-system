@@ -6,15 +6,27 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.deps.db import get_db
+from app.deps.auth import get_current_dept
 from app.models.circular import Circular
+from app.models.dept import Department
 
 router = APIRouter(prefix="/drafts", tags=["Drafts"])
 
 
 @router.get("")
-def list_drafts(db: Session = Depends(get_db)):
+def list_drafts(
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept)
+):
     """
-    List all draft circulars.
+    List all draft circulars for the logged-in department's directorate.
     Returns circulars with status="draft".
     """
-    return db.query(Circular).filter(Circular.status == "draft").all()
+    return (
+        db.query(Circular)
+        .filter(
+            Circular.status == "draft",
+            Circular.sender_department_id == current_dept.id
+        )
+        .all()
+    )

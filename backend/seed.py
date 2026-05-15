@@ -22,21 +22,23 @@ departments = [
     {"directorate": "C", "name": "General Services", "password": "c123"},
     {"directorate": "C", "name": "Legal", "password": "c123"},
     {"directorate": "C", "name": "Recruitment Department", "password": "c123"},
+    {"directorate": "C", "name": "Administration Section", "password": "c123"},
 
     # D - Finance
     {"directorate": "D", "name": "Corporation Finance", "password": "d123"},
     {"directorate": "D", "name": "Accounts", "password": "d123"},
     {"directorate": "D", "name": "Regulatory Compliance", "password": "d123"},
     {"directorate": "D", "name": "Retirement Fund Management Division", "password": "d123"},
+    {"directorate": "D", "name": "Administration Section", "password": "d123"},
 
-    # E
+    # E - Generation
     {"directorate": "E", "name": "Large Generation Operation and Maintenance", "password": "e123"},
     {"directorate": "E", "name": "Medium Generation Operation and Maintenance", "password": "e123"},
     {"directorate": "E", "name": "Generation Development and Support", "password": "e123"},
     {"directorate": "E", "name": "Administration Division", "password": "e123"},
     {"directorate": "E", "name": "Finance Division", "password": "e123"},
 
-    # F
+    # F - Transmission 
     {"directorate": "F", "name": "High Voltage Grid Development", "password": "f123"},
     {"directorate": "F", "name": "Medium Voltage Grid Development", "password": "f123"},
     {"directorate": "F", "name": "Power System Operation", "password": "f123"},
@@ -46,20 +48,23 @@ departments = [
     {"directorate": "F", "name": "Administration Division", "password": "f123"},
     {"directorate": "F", "name": "Finance Division", "password": "f123"},
 
-    # G
+    # G - Distribution & Consumer Service
     {"directorate": "G", "name": "Planning and Technical Service", "password": "g123"},
     {"directorate": "G", "name": "Smart Metering and Automation", "password": "g123"},
     {"directorate": "G", "name": "Community and Rural Electrification", "password": "g123"},
+    {"directorate": "G", "name": "Administration Section", "password": "g123"},
 
-    # H
+    # H - Engineering Services
     {"directorate": "H", "name": "Project Development", "password": "h123"},
     {"directorate": "H", "name": "Environment and Social Studies", "password": "h123"},
     {"directorate": "H", "name": "Geological Investigation", "password": "h123"},
+    {"directorate": "H", "name": "Administration Section", "password": "h123"},
 
-    # I
+    # I - Project Management
     {"directorate": "I", "name": "Transmission Line and Substation", "password": "i123"},
     {"directorate": "I", "name": "Distribution Line and Substation", "password": "i123"},
     {"directorate": "I", "name": "Social Safeguard and Environment Management", "password": "i123"},
+    {"directorate": "I", "name": "Administration Section", "password": "i123"},
 ]
 
 

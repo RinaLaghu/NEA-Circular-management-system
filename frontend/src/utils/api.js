@@ -6,7 +6,6 @@ export const authFetch = async (url, options = {}) => {
   } catch {
     departmentInfo = {};
   }
-
   const token = departmentInfo?.access_token;
 
   const headers = new Headers(options.headers || {});

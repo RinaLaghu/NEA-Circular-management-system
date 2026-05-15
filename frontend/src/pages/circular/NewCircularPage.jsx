@@ -4,19 +4,6 @@ import CircularPreviewPage from "@/pages/circular/CircularPreviewPage";
 import { authFetch } from "@/utils/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-const INTERNAL_DEPTS = [
-  { id: "hr", name: "Human Resource", desc: "Ensures Labor law" },
-  { id: "legal", name: "Legal Affairs", desc: "Policy verification unit" },
-  { id: "recruit", name: "Recruitment Dept.", desc: "Hiring the right" },
-];
-
-const EXTERNAL_DEPTS = [
-  { id: "gen", name: "Generation Directorate" },
-  { id: "trans", name: "Transmission Directorate" },
-  { id: "fin", name: "Finance Directorate" },
-  { id: "pm", name: "Project Management dir." },
-];
-
 function NewCircularPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -25,25 +12,47 @@ function NewCircularPage() {
   const [circularTitle, setCircularTitle] = useState("");
   const [category, setCategory] = useState("Administrative Policy");
   const [priority, setPriority] = useState("urgent");
-  const [selectedInternal, setSelectedInternal] = useState("hr");
-  const [selectedExternal, setSelectedExternal] = useState(["gen"]);
+  
+  const [internalDepts, setInternalDepts] = useState([]);
+  const [externalDepts, setExternalDepts] = useState([]);
+  
+  const [selectedInternal, setSelectedInternal] = useState([]);
+  const [selectedExternal, setSelectedExternal] = useState([]);
   const [bodyText, setBodyText] = useState("");
   const [files, setFiles] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    if (!draftId) return;
+    // Fetch draft data if editing
+    if (draftId) {
+      authFetch(`http://127.0.0.1:8000/circular/${draftId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setCircularTitle(data.subject || "");
+          setBodyText(data.description || "");
+          setCategory(data.category || "Administrative Policy");
+          setPriority(data.priority || "routine");
+          setSelectedInternal(data.selected_internal_dept_ids || []);
+          setSelectedExternal(data.selected_external_directorate_ids || []);
+        })
+        .catch((err) => console.error("Failed to load draft:", err));
+    }
 
-    fetch(`http://127.0.0.1:8000/circular/${draftId}`)
+    // Fetch recipients
+    authFetch("http://127.0.0.1:8000/circular/recipients")
       .then((res) => res.json())
       .then((data) => {
-        setCircularTitle(data.subject || "");
-        setBodyText(data.description || "");
-        setCategory(data.category || "Administrative Policy");
-        setPriority(data.priority || "routine");
+        setInternalDepts(data.internal || []);
+        setExternalDepts(data.external || []);
       })
-      .catch((err) => console.error("Failed to load draft:", err));
+      .catch((err) => console.error("Failed to load recipients:", err));
   }, [draftId]);
+
+  const toggleInternal = (id) => {
+    setSelectedInternal((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const toggleExternal = (id) => {
     setSelectedExternal((prev) =>
@@ -73,15 +82,14 @@ function NewCircularPage() {
   };
 
   const isLoggedIn = !!localStorage.getItem("token");
-  let isAdministration = false;
-  if (isLoggedIn) {
+  const deptData = (() => {
     try {
-      const deptData = JSON.parse(localStorage.getItem("department"));
-      isAdministration = deptData?.is_administration === true;
-    } catch {
-      // Ignore parsing errors
+      return JSON.parse(localStorage.getItem("department"));
+    } catch (e) {
+      return null;
     }
-  }
+  })();
+  const isAdministration = deptData?.is_administration === true;
 
   const saveDraft = async () => {
     if (!circularTitle.trim()) {
@@ -110,7 +118,8 @@ function NewCircularPage() {
     }
 
     formData.append("sender_department_id", senderId);
-    formData.append("receiver_department_id", 2);
+    formData.append("selected_internal_dept_ids", JSON.stringify(selectedInternal));
+    formData.append("selected_external_directorate_ids", JSON.stringify(selectedExternal));
 
     const validFile = files.find((f) => f.status === "ok");
 
@@ -145,14 +154,93 @@ function NewCircularPage() {
   };
 
   const sendCircular = async () => {
-    if (!draftId) {
-      alert("Please save the circular as draft first, then send it from edit mode.");
+    if (!circularTitle.trim()) {
+      alert("Please enter circular title");
+      return;
+    }
+
+    if (!bodyText.trim()) {
+      alert("Please enter circular description/body");
+      return;
+    }
+
+    if (selectedInternal.length === 0 && selectedExternal.length === 0) {
+      alert("Please select at least one recipient before sending.");
+      return;
+    }
+
+    const validFile = files.find((f) => f.status === "ok");
+    const formData = new FormData();
+
+    formData.append("subject", circularTitle);
+    formData.append("description", bodyText);
+    formData.append("category", category);
+    formData.append("priority", priority);
+
+    let senderId = 1;
+    try {
+      const storedDept = JSON.parse(localStorage.getItem("department"));
+      if (storedDept?.department_id) senderId = storedDept.department_id;
+    } catch (e) {}
+
+    formData.append("sender_department_id", senderId);
+    formData.append("selected_internal_dept_ids", JSON.stringify(selectedInternal));
+    formData.append("selected_external_directorate_ids", JSON.stringify(selectedExternal));
+
+    if (validFile) {
+      formData.append("file", validFile.file);
+    }
+
+    if (draftId) {
+      try {
+        const updateRes = await authFetch(`http://127.0.0.1:8000/circular/${draftId}`, {
+          method: "PUT",
+          body: formData,
+        });
+
+        if (!updateRes.ok) {
+          const error = await updateRes.json();
+          alert(error.detail || "Failed to update draft before sending");
+          return;
+        }
+      } catch (err) {
+        console.error("Draft update error before sending:", err);
+        alert("Backend connection failed");
+        return;
+      }
+
+      try {
+        const sendRes = await authFetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            internal_dept_ids: selectedInternal,
+            external_directorate_ids: selectedExternal,
+          }),
+        });
+
+        if (!sendRes.ok) {
+          const error = await sendRes.json();
+          alert(error.detail || "Failed to send circular");
+          return;
+        }
+
+        alert("Circular sent successfully");
+        navigate("/sent");
+      } catch (err) {
+        console.error("Send circular error:", err);
+        alert("Backend connection failed");
+      }
+
       return;
     }
 
     try {
-      const res = await authFetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
-        method: "PUT",
+      const res = await authFetch("http://127.0.0.1:8000/circular/send", {
+        method: "POST",
+        body: formData,
       });
 
       if (!res.ok) {
@@ -178,8 +266,12 @@ function NewCircularPage() {
           priority,
           selectedInternal,
           selectedExternal,
+          internalDepts,
+          externalDepts,
           bodyText,
           files,
+          fromDepartment: deptData?.department || "Administration Office",
+          fromDirectorate: deptData?.directorate || "Administration",
         }}
         onBack={() => setShowPreview(false)}
         onSend={sendCircular}
@@ -187,6 +279,19 @@ function NewCircularPage() {
       />
     );
   }
+
+  const DIRECTORATE_NAMES = {
+    "A": "Planning, Monitoring and IT",
+    "B": "Business Development",
+    "C": "Administration",
+    "D": "Finance",
+    "E": "Generation",
+    "F": "Transmission",
+    "G": "Distribution & Consumer Services",
+    "H": "Engineering Service",
+    "I": "Project Management",
+    "X": "BOARD OF DIRECTORS"
+  };
 
   return (
     <PageLayout>
@@ -276,30 +381,40 @@ function NewCircularPage() {
             <div className="nc-recipient-grid">
               <div>
                 <div className="nc-section-mini-title">INTERNAL DEPARTMENTS</div>
-                {INTERNAL_DEPTS.map((dept) => (
-                  <button
-                    key={dept.id}
-                    type="button"
-                    className={`nc-dept-card ${
-                      selectedInternal === dept.id ? "selected internal" : ""
-                    }`}
-                    onClick={() => setSelectedInternal(dept.id)}
-                  >
-                    <span className="nc-check-circle">
-                      {selectedInternal === dept.id ? "●" : ""}
-                    </span>
-                    <div className="nc-dept-text">
-                      <span className="nc-dept-name">{dept.name}</span>
-                      <span className="nc-dept-desc">{dept.desc}</span>
-                    </div>
-                  </button>
-                ))}
+                {internalDepts.length === 0 && (
+                  <p style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}>No internal departments available.</p>
+                )}
+                {internalDepts.map((dept) => {
+                  const isSelected = selectedInternal.includes(dept.id);
+                  return (
+                    <button
+                      key={dept.id}
+                      type="button"
+                      className={`nc-dept-card ${
+                        isSelected ? "selected internal" : ""
+                      }`}
+                      onClick={() => toggleInternal(dept.id)}
+                    >
+                      <span className="nc-check-box">
+                        {isSelected ? "✓" : ""}
+                      </span>
+                      <div className="nc-dept-text">
+                        <span className="nc-dept-name">{dept.name}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
               <div>
                 <div className="nc-section-mini-title">EXTERNAL DIRECTORATES</div>
-                {EXTERNAL_DEPTS.map((dept) => {
+                {externalDepts.length === 0 && (
+                  <p style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}>No external directorates available.</p>
+                )}
+
+                {externalDepts.map((dept) => {
                   const isSelected = selectedExternal.includes(dept.id);
+                  const displayName = DIRECTORATE_NAMES[dept.name] ? `${dept.name} - ${DIRECTORATE_NAMES[dept.name]}` : dept.name;
 
                   return (
                     <button
@@ -314,7 +429,7 @@ function NewCircularPage() {
                         {isSelected ? "✓" : ""}
                       </span>
                       <div className="nc-dept-text">
-                        <span className="nc-dept-name">{dept.name}</span>
+                        <span className="nc-dept-name">{displayName}</span>
                       </div>
                     </button>
                   );
@@ -326,19 +441,7 @@ function NewCircularPage() {
           <div className="nc-card nc-editor-card">
             <div className="nc-editor-toolbar">
               <div className="nc-toolbar-tools">
-                <button type="button" className="nc-tool-btn">
-                  <b>B</b>
-                </button>
-                <button type="button" className="nc-tool-btn">
-                  <i>I</i>
-                </button>
-                <button type="button" className="nc-tool-btn">
-                  ☰
-                </button>
-                <div className="nc-tool-divider" />
-                <button type="button" className="nc-tool-btn">
-                  🔗
-                </button>
+               <span className="nc-tool-label"><b>Circular Content / Body :</b></span>
               </div>
               <span className="nc-word-count">WORD COUNT: {wordCount}</span>
             </div>
@@ -426,7 +529,7 @@ function NewCircularPage() {
           <div className="nc-info-banner">
             <span className="nc-info-icon">ℹ️</span>
             <span>
-              Circulars sent before 14:00 will be reviewed by the Directorate on
+              Circulars sent before 17:00 will be reviewed by the Administration Department on
               the same business day.
             </span>
           </div>
@@ -434,11 +537,6 @@ function NewCircularPage() {
       </div>
 
       <div className="nc-footer">
-        <div className="nc-autosave">
-          <span className="nc-autosave-dot" />
-          {draftId ? "Editing existing draft" : "Draft auto-saved at 11:24 AM"}
-        </div>
-
         <div className="nc-footer-actions">
           <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
             {draftId ? "Update Draft" : "Save as Draft"}
@@ -452,11 +550,11 @@ function NewCircularPage() {
             👁 Preview
           </button>
 
-          {isAdministration && (
-            <button type="button" className="nc-primary-btn" onClick={sendCircular}>
-              ➤ Send Circular
-            </button>
-          )}
+          {/* All departments (including non-admins) can send circulars now, 
+              but the backend validates target routing rules. */}
+          <button type="button" className="nc-primary-btn" onClick={sendCircular}>
+            ➤ Send Now
+          </button>
         </div>
       </div>
     </PageLayout>
