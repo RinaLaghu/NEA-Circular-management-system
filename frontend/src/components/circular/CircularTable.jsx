@@ -156,12 +156,18 @@ function CircularTable({
                                 onClick={async (e) => {
                                   e.stopPropagation();
 
-                                  await authFetch(
+                                  const res = await fetch(
                                     `http://127.0.0.1:8000/circular/archive/${encodeURIComponent(item.id)}`,
                                     { method: "PUT" }
                                   );
 
+                                  if (!res.ok) {
+                                    alert("Failed to archive circular");
+                                    return;
+                                  }
+
                                   onArchive(item.id);
+
                                 }}
                               >
                                 🗂 Archive

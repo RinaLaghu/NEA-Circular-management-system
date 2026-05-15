@@ -11,7 +11,6 @@ from app.deps.auth import require_admin_dept, get_current_dept
 from app.db.database import get_db
 from app.models.circular import Circular
 from app.models.dept import Department
-from app.models.directorate import Directorate
 from app.models.recepient import CircularRecipient
 from app.models.audit_log import AuditLog
 from pydantic import BaseModel
@@ -28,9 +27,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def generate_reference_no(db: Session):
-    """Generate a unique reference number for circular."""
     year = datetime.now().year
     prefix = f"NEA-CIR-{year}-"
+
     latest = (
         db.query(Circular)
         .filter(Circular.reference_no.like(f"{prefix}%"))
@@ -42,7 +41,9 @@ def generate_reference_no(db: Session):
         try:
             suffix = int(latest.reference_no.rsplit("-", 1)[1])
         except (ValueError, IndexError):
-            suffix = db.query(Circular).filter(Circular.reference_no.like(f"{prefix}%")).count()
+            suffix = db.query(Circular).filter(
+                Circular.reference_no.like(f"{prefix}%")
+            ).count()
         next_count = suffix + 1
     else:
         next_count = 1
@@ -438,14 +439,18 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="Sender department not found")
 
     file_url = None
+
     if file:
         allowed_types = ["application/pdf", "image/jpeg", "image/png"]
+
         if file.content_type not in allowed_types:
             raise HTTPException(status_code=400, detail="Only PDF, JPG, and PNG files are allowed")
         filename = f"{datetime.now().timestamp()}_{file.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
+
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+
         file_url = f"/uploads/{filename}"
 
     circular = Circular(
@@ -462,6 +467,7 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
     )
 
     db.add(circular)
+
     for attempt in range(3):
         try:
             db.commit()
@@ -469,11 +475,13 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
             return circular
         except IntegrityError:
             db.rollback()
+
             if attempt == 2:
                 raise HTTPException(
                     status_code=500,
                     detail="Unable to generate a unique reference number. Please retry."
                 )
+
             circular.reference_no = generate_reference_no(db)
             db.add(circular)
 
@@ -913,11 +921,11 @@ def reject_circular(
 def mark_circular_read(
     circular_id: int,
     db: Session = Depends(get_db),
-    current_dept: Department = Depends(get_current_dept)
+    current_dept: Department = Depends(get_current_dept),
 ):
     recipient = db.query(CircularRecipient).filter(
         CircularRecipient.circular_id == circular_id,
-        CircularRecipient.department_id == current_dept.id
+        CircularRecipient.department_id == current_dept.id,
     ).first()
 
     if not recipient:
@@ -959,7 +967,39 @@ def unarchive_circular(
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
 
-    circular.is_archived = False
+    if circular.status != "draft":
+        raise HTTPException(status_code=400, detail="Only draft circulars can be edited")
+
+    sender = db.query(Department).filter(Department.id == sender_department_id).first()
+    receiver = db.query(Department).filter(Department.id == receiver_department_id).first()
+
+    if not sender or not receiver:
+        raise HTTPException(status_code=404, detail="Sender or receiver department not found")
+
+    circular.subject = subject
+    circular.description = description
+    circular.category = category
+    circular.priority = priority
+    circular.sender_department_id = sender_department_id
+    circular.receiver_department_id = receiver_department_id
+
+    if file:
+        allowed_types = ["application/pdf", "image/jpeg", "image/png"]
+
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail="Only PDF, JPG, and PNG files allowed",
+            )
+
+        filename = f"{datetime.now().timestamp()}_{file.filename}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        circular.file_url = f"/uploads/{filename}"
+
     db.commit()
     db.refresh(circular)
     return circular

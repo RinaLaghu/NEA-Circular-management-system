@@ -1,7 +1,6 @@
-import { authFetch } from '@/utils/api';
 import PageLayout from "@/components/layout/PageLayout";
 import CircularTable from "@/components/circular/CircularTable";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function ArchivePage() {
@@ -9,46 +8,81 @@ function ArchivePage() {
   const [activeId, setActiveId] = useState(null);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
-const fetchArchive = () => {
-  authFetch("http://127.0.0.1:8000/circular/archive")
-    .then((res) => res.json())
-    .then((data) => setCirculars(data));
-};
 
-useEffect(() => {
-  fetchArchive();
-}, []);
+  useEffect(() => {
+    const fetchArchive = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/circular/archive");
 
-  const filtered = circulars.filter(c =>
-    c.subject.toLowerCase().includes(search.toLowerCase())
+        console.log("Archive response status:", res.status);
+
+        const data = await res.json();
+
+        console.log("Archive data:", data);
+
+        if (Array.isArray(data)) {
+          setCirculars(data);
+        } else {
+          setCirculars([]);
+        }
+      } catch (error) {
+        console.error("Failed to load archive:", error);
+        setCirculars([]);
+      }
+    };
+
+    fetchArchive();
+  }, []);
+
+  const filtered = circulars.filter((c) =>
+    (c.subject || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const handleUnarchive = async (id) => {
-  await authFetch(
-    `http://127.0.0.1:8000/circular/unarchive/${encodeURIComponent(id)}`,
-    { method: "PUT" }
-  );
+    const res = await fetch(`http://127.0.0.1:8000/circular/unarchive/${id}`, {
+      method: "PUT",
+    });
 
-  fetchArchive(); // 🔥 refresh from DB
-};
+    if (!res.ok) {
+      alert("Failed to unarchive circular");
+      return;
+    }
+
+    setCirculars((prev) => prev.filter((item) => item.id !== id));
+    setActiveId(null);
+  };
+
   const handleDelete = async (id) => {
-  await authFetch(
-    `http://127.0.0.1:8000/circular/delete/${encodeURIComponent(id)}`,
-    { method: "DELETE" }
-  );
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this archived circular?"
+    );
 
-  fetchArchive(); // 🔥 refresh
-};
+    if (!confirmDelete) return;
+
+    const res = await fetch(`http://127.0.0.1:8000/circular/delete/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      const errorMessage =
+        errorData?.detail || errorData?.message || res.statusText || "Failed to delete circular";
+      alert(`Failed to delete circular: ${errorMessage}`);
+      return;
+    }
+
+    setCirculars((prev) => prev.filter((item) => item.id !== id));
+    setActiveId(null);
+  };
 
   return (
     <PageLayout>
       <div className="simple-page-header archive-centered-header">
         <div>
           <h1>Archive</h1>
+          <p className="simple-subtitle">{filtered.length} archived circulars</p>
         </div>
       </div>
-
-      <p className="center-summary-text">All past circulars</p>
 
       <div className="archive-search-wrap">
         <input
@@ -60,19 +94,27 @@ useEffect(() => {
         />
       </div>
 
-      <CircularTable
-       circulars={filtered}
-  mode="archive"
-  activeId={activeId}
-  setActiveId={setActiveId}
-  onUnarchive={handleUnarchive}
-  onDelete={handleDelete}
-      />
+      {filtered.length === 0 ? (
+        <p className="simple-subtitle">No archived circulars found.</p>
+      ) : (
+        <CircularTable
+          circulars={filtered}
+          mode="archive"
+          activeId={activeId}
+          setActiveId={setActiveId}
+          onUnarchive={handleUnarchive}
+          onDelete={handleDelete}
+        />
+      )}
 
       <div className="bottom-status-bar">
         <span className="status-dot"></span>
         <span>Viewing: Archive</span>
-        <button className="primary-page-btn bottom-btn" onClick={() => navigate("/new-circular")}>
+
+        <button
+          className="primary-page-btn bottom-btn"
+          onClick={() => navigate("/new-circular")}
+        >
           + New Circular
         </button>
       </div>

@@ -113,7 +113,9 @@ function NewCircularPage() {
     try {
       const deptData = JSON.parse(localStorage.getItem("department"));
       if (deptData?.department_id) senderId = deptData.department_id;
-    } catch (e) {}
+    } catch {
+      // Ignore parsing errors
+    }
 
     formData.append("sender_department_id", senderId);
     formData.append("selected_internal_dept_ids", JSON.stringify(selectedInternal));
