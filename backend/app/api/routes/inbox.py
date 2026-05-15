@@ -23,7 +23,7 @@ def list_inbox(db: Session = Depends(get_db), current_dept: Department = Depends
     Only approved/sent circulars addressed to this department from other directorates.
     Pending-approval circulars are handled separately in admin review.
     """
-    rows = (
+    rows_query = (
         db.query(CircularRecipient, Circular)
         .join(Circular, CircularRecipient.circular_id == Circular.id)
         .join(Department, Circular.sender_department_id == Department.id)
@@ -32,11 +32,14 @@ def list_inbox(db: Session = Depends(get_db), current_dept: Department = Depends
             Circular.status == "sent",
             Circular.approval_status == "approved",
             Circular.is_archived == False,
-            Department.directorate_id != current_dept.directorate_id
         )
         .order_by(Circular.created_at.desc())
-        .all()
     )
+
+    if current_dept.is_administration:
+        rows_query = rows_query.filter(Department.directorate_id != current_dept.directorate_id)
+
+    rows = rows_query.all()
 
     if not rows:
         return []
