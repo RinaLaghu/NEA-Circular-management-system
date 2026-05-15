@@ -289,8 +289,7 @@ function NewCircularPage() {
     "F": "Transmission",
     "G": "Distribution & Consumer Services",
     "H": "Engineering Service",
-    "I": "Project Management",
-    "X": "BOARD OF DIRECTORS"
+    "I": "Project Management"
   };
 
   return (

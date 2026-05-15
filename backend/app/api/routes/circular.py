@@ -10,6 +10,7 @@ from sqlalchemy.sql import func
 from app.deps.auth import require_admin_dept, get_current_dept
 from app.db.database import get_db
 from app.models.circular import Circular
+from app.models.directorate import Directorate
 from app.models.dept import Department
 from app.models.recepient import CircularRecipient
 from app.models.audit_log import AuditLog
@@ -967,39 +968,7 @@ def unarchive_circular(
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
 
-    if circular.status != "draft":
-        raise HTTPException(status_code=400, detail="Only draft circulars can be edited")
-
-    sender = db.query(Department).filter(Department.id == sender_department_id).first()
-    receiver = db.query(Department).filter(Department.id == receiver_department_id).first()
-
-    if not sender or not receiver:
-        raise HTTPException(status_code=404, detail="Sender or receiver department not found")
-
-    circular.subject = subject
-    circular.description = description
-    circular.category = category
-    circular.priority = priority
-    circular.sender_department_id = sender_department_id
-    circular.receiver_department_id = receiver_department_id
-
-    if file:
-        allowed_types = ["application/pdf", "image/jpeg", "image/png"]
-
-        if file.content_type not in allowed_types:
-            raise HTTPException(
-                status_code=400,
-                detail="Only PDF, JPG, and PNG files allowed",
-            )
-
-        filename = f"{datetime.now().timestamp()}_{file.filename}"
-        file_path = os.path.join(UPLOAD_DIR, filename)
-
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        circular.file_url = f"/uploads/{filename}"
-
+    circular.is_archived = False
     db.commit()
     db.refresh(circular)
     return circular
