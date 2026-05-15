@@ -106,18 +106,6 @@ function ArchivePage() {
           onDelete={handleDelete}
         />
       )}
-
-      <div className="bottom-status-bar">
-        <span className="status-dot"></span>
-        <span>Viewing: Archive</span>
-
-        <button
-          className="primary-page-btn bottom-btn"
-          onClick={() => navigate("/new-circular")}
-        >
-          + New Circular
-        </button>
-      </div>
     </PageLayout>
   );
 }
