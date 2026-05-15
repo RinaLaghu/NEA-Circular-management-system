@@ -201,7 +201,6 @@ def get_circular_stats(
             Circular.status == "sent",
             Circular.approval_status == "approved",
             Circular.is_archived == False,
-            Department.directorate_id != current_dept.directorate_id
         )
     )
 
@@ -215,9 +214,12 @@ def get_circular_stats(
             Circular.status == "sent",
             Circular.approval_status == "approved",
             Circular.is_archived == False,
-            Department.directorate_id != current_dept.directorate_id
         )
     )
+
+    if current_dept.is_administration:
+        inbox_query = inbox_query.filter(Department.directorate_id != current_dept.directorate_id)
+        unread_query = unread_query.filter(Department.directorate_id != current_dept.directorate_id)
 
     inbox_total = inbox_query.count()
     unread = unread_query.count()
@@ -315,7 +317,7 @@ def list_inbox_circulars(
     For non-admin, all sent circulars.
     Pending-approval circulars are in /admin-review.
     """
-    recipients = (
+    recipients_query = (
         db.query(CircularRecipient)
         .join(Circular, CircularRecipient.circular_id == Circular.id)
         .join(Department, Circular.sender_department_id == Department.id)
@@ -324,11 +326,14 @@ def list_inbox_circulars(
             Circular.status == "sent",
             Circular.approval_status == "approved",
             Circular.is_archived == False,
-            Department.directorate_id != current_dept.directorate_id
         )
         .order_by(Circular.created_at.desc())
-        .all()
     )
+
+    if current_dept.is_administration:
+        recipients_query = recipients_query.filter(Department.directorate_id != current_dept.directorate_id)
+
+    recipients = recipients_query.all()
 
     return [_circular_to_dict(r.circular, db) for r in recipients]
 
