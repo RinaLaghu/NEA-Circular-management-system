@@ -25,13 +25,15 @@ function NewCircularPage() {
   useEffect(() => {
     // Fetch draft data if editing
     if (draftId) {
-      fetch(`http://127.0.0.1:8000/circular/${draftId}`)
+      authFetch(`http://127.0.0.1:8000/circular/${draftId}`)
         .then((res) => res.json())
         .then((data) => {
           setCircularTitle(data.subject || "");
           setBodyText(data.description || "");
           setCategory(data.category || "Administrative Policy");
           setPriority(data.priority || "routine");
+          setSelectedInternal(data.selected_internal_dept_ids || []);
+          setSelectedExternal(data.selected_external_directorate_ids || []);
         })
         .catch((err) => console.error("Failed to load draft:", err));
     }
@@ -80,13 +82,14 @@ function NewCircularPage() {
   };
 
   const isLoggedIn = !!localStorage.getItem("token");
-  let isAdministration = false;
-  if (isLoggedIn) {
+  const deptData = (() => {
     try {
-      const deptData = JSON.parse(localStorage.getItem("department"));
-      isAdministration = deptData?.is_administration === true;
-    } catch (e) {}
-  }
+      return JSON.parse(localStorage.getItem("department"));
+    } catch (e) {
+      return null;
+    }
+  })();
+  const isAdministration = deptData?.is_administration === true;
 
   const saveDraft = async () => {
     if (!circularTitle.trim()) {
@@ -113,6 +116,8 @@ function NewCircularPage() {
     } catch (e) {}
 
     formData.append("sender_department_id", senderId);
+    formData.append("selected_internal_dept_ids", JSON.stringify(selectedInternal));
+    formData.append("selected_external_directorate_ids", JSON.stringify(selectedExternal));
 
     const validFile = files.find((f) => f.status === "ok");
 
@@ -147,21 +152,93 @@ function NewCircularPage() {
   };
 
   const sendCircular = async () => {
-    if (!draftId) {
-      alert("Please save the circular as draft first, then send it from edit mode.");
+    if (!circularTitle.trim()) {
+      alert("Please enter circular title");
+      return;
+    }
+
+    if (!bodyText.trim()) {
+      alert("Please enter circular description/body");
+      return;
+    }
+
+    if (selectedInternal.length === 0 && selectedExternal.length === 0) {
+      alert("Please select at least one recipient before sending.");
+      return;
+    }
+
+    const validFile = files.find((f) => f.status === "ok");
+    const formData = new FormData();
+
+    formData.append("subject", circularTitle);
+    formData.append("description", bodyText);
+    formData.append("category", category);
+    formData.append("priority", priority);
+
+    let senderId = 1;
+    try {
+      const storedDept = JSON.parse(localStorage.getItem("department"));
+      if (storedDept?.department_id) senderId = storedDept.department_id;
+    } catch (e) {}
+
+    formData.append("sender_department_id", senderId);
+    formData.append("selected_internal_dept_ids", JSON.stringify(selectedInternal));
+    formData.append("selected_external_directorate_ids", JSON.stringify(selectedExternal));
+
+    if (validFile) {
+      formData.append("file", validFile.file);
+    }
+
+    if (draftId) {
+      try {
+        const updateRes = await authFetch(`http://127.0.0.1:8000/circular/${draftId}`, {
+          method: "PUT",
+          body: formData,
+        });
+
+        if (!updateRes.ok) {
+          const error = await updateRes.json();
+          alert(error.detail || "Failed to update draft before sending");
+          return;
+        }
+      } catch (err) {
+        console.error("Draft update error before sending:", err);
+        alert("Backend connection failed");
+        return;
+      }
+
+      try {
+        const sendRes = await authFetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            internal_dept_ids: selectedInternal,
+            external_directorate_ids: selectedExternal,
+          }),
+        });
+
+        if (!sendRes.ok) {
+          const error = await sendRes.json();
+          alert(error.detail || "Failed to send circular");
+          return;
+        }
+
+        alert("Circular sent successfully");
+        navigate("/sent");
+      } catch (err) {
+        console.error("Send circular error:", err);
+        alert("Backend connection failed");
+      }
+
       return;
     }
 
     try {
-      const res = await authFetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          internal_dept_ids: selectedInternal,
-          external_directorate_ids: selectedExternal,
-        }),
+      const res = await authFetch("http://127.0.0.1:8000/circular/send", {
+        method: "POST",
+        body: formData,
       });
 
       if (!res.ok) {
@@ -191,6 +268,8 @@ function NewCircularPage() {
           externalDepts,
           bodyText,
           files,
+          fromDepartment: deptData?.department || "Administration Office",
+          fromDirectorate: deptData?.directorate || "Administration",
         }}
         onBack={() => setShowPreview(false)}
         onSend={sendCircular}
@@ -360,19 +439,7 @@ function NewCircularPage() {
           <div className="nc-card nc-editor-card">
             <div className="nc-editor-toolbar">
               <div className="nc-toolbar-tools">
-                <button type="button" className="nc-tool-btn">
-                  <b>B</b>
-                </button>
-                <button type="button" className="nc-tool-btn">
-                  <i>I</i>
-                </button>
-                <button type="button" className="nc-tool-btn">
-                  ☰
-                </button>
-                <div className="nc-tool-divider" />
-                <button type="button" className="nc-tool-btn">
-                  🔗
-                </button>
+               <span className="nc-tool-label"><b>Circular Content / Body :</b></span>
               </div>
               <span className="nc-word-count">WORD COUNT: {wordCount}</span>
             </div>
@@ -460,7 +527,7 @@ function NewCircularPage() {
           <div className="nc-info-banner">
             <span className="nc-info-icon">ℹ️</span>
             <span>
-              Circulars sent before 14:00 will be reviewed by the Directorate on
+              Circulars sent before 17:00 will be reviewed by the Administration Department on
               the same business day.
             </span>
           </div>
@@ -468,11 +535,6 @@ function NewCircularPage() {
       </div>
 
       <div className="nc-footer">
-        <div className="nc-autosave">
-          <span className="nc-autosave-dot" />
-          {draftId ? "Editing existing draft" : "Draft auto-saved at 11:24 AM"}
-        </div>
-
         <div className="nc-footer-actions">
           <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
             {draftId ? "Update Draft" : "Save as Draft"}
@@ -489,7 +551,7 @@ function NewCircularPage() {
           {/* All departments (including non-admins) can send circulars now, 
               but the backend validates target routing rules. */}
           <button type="button" className="nc-primary-btn" onClick={sendCircular}>
-            ➤ Send Circular
+            ➤ Send Now
           </button>
         </div>
       </div>

@@ -41,10 +41,7 @@ function CircularDashboard() {
               <h1>Administrative Circular</h1>
               <p className="page-subtitle">Priority Ledger</p>
             </div>
-            <div className="header-actions">
-              <button className="action-btn secondary">Filter</button>
-              <button className="action-btn secondary">Export</button>
-            </div>
+            
           </div>
           <div className="stats-grid">
             <StatCard title="Total Received" value={stats.total} accent="blue" />
