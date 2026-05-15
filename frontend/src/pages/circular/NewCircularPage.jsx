@@ -439,19 +439,7 @@ function NewCircularPage() {
           <div className="nc-card nc-editor-card">
             <div className="nc-editor-toolbar">
               <div className="nc-toolbar-tools">
-                <button type="button" className="nc-tool-btn">
-                  <b>B</b>
-                </button>
-                <button type="button" className="nc-tool-btn">
-                  <i>I</i>
-                </button>
-                <button type="button" className="nc-tool-btn">
-                  ☰
-                </button>
-                <div className="nc-tool-divider" />
-                <button type="button" className="nc-tool-btn">
-                  🔗
-                </button>
+               <span className="nc-tool-label"><b>Circular Content / Body :</b></span>
               </div>
               <span className="nc-word-count">WORD COUNT: {wordCount}</span>
             </div>
@@ -539,7 +527,7 @@ function NewCircularPage() {
           <div className="nc-info-banner">
             <span className="nc-info-icon">ℹ️</span>
             <span>
-              Circulars sent before 14:00 will be reviewed by the Directorate on
+              Circulars sent before 17:00 will be reviewed by the Administration Department on
               the same business day.
             </span>
           </div>
@@ -547,11 +535,6 @@ function NewCircularPage() {
       </div>
 
       <div className="nc-footer">
-        <div className="nc-autosave">
-          <span className="nc-autosave-dot" />
-          {draftId ? "Editing existing draft" : "Draft auto-saved at 11:24 AM"}
-        </div>
-
         <div className="nc-footer-actions">
           <button type="button" className="nc-secondary-btn" onClick={saveDraft}>
             {draftId ? "Update Draft" : "Save as Draft"}
