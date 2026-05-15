@@ -82,8 +82,8 @@ function Login() {
         <div className="card">
           <label>DIRECTORATE</label>
           <select value={directorate} onChange={handleDirectorateChange}>
-            <option value="" disabled>Select Directorate</option>
-            <option value="X">BOARD OF DIRECTORS</option>
+            <option value="" hidden>Select Directorate</option>
+            <option value="X">Managing Director</option>
             <option value="A">Planning, Monitoring and IT</option>
             <option value="B">Business Development</option>
             <option value="C">Administration</option>
@@ -100,7 +100,7 @@ function Login() {
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
           >
-            <option value="">Select Department</option>
+            <option value="" hidden>Select Department</option>
             {departments.map((dep, index) => (
               <option key={index} value={dep}>{dep}</option>
             ))}
