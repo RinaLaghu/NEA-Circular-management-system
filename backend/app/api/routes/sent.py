@@ -17,12 +17,12 @@ router = APIRouter(prefix="/sent", tags=["Sent"])
 @router.get("")
 def list_sent(db: Session = Depends(get_db), current_dept: Department = Depends(get_current_dept)):
     """
-    List all circulars sent by the current department.
-    Filters by sender_department_id and status="sent".
+    List all circulars sent or pending approval by the current department.
+    Filters by sender_department_id and status in ("sent", "pending_approval").
     """
     circulars = db.query(Circular).filter(
         Circular.sender_department_id == current_dept.id,
-        Circular.status == "sent",
+        Circular.status.in_(["sent", "pending_approval"]),
         Circular.is_archived == False
     ).order_by(Circular.created_at.desc()).all()
     

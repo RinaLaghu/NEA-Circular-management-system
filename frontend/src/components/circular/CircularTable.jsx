@@ -4,6 +4,8 @@ import React from "react";
 function CircularTable({
   circulars,
   onView,
+  onCompose,
+  isAdministration,
   activeId,
   setActiveId,
   onArchive,
@@ -116,6 +118,7 @@ function CircularTable({
                     <small>{item.time}</small>
                   </div>
                 </td>
+
               </tr>
 
               {/* EXPANDED ROW */}
@@ -200,6 +203,51 @@ function CircularTable({
                                 }}
                               >
                                 🗑 Delete
+                              </button>
+                            </>
+                          )}
+
+                          {mode === "admin-review" && item.status === "pending_approval" && (
+                            <>
+                              {/* EDIT & FORWARD */}
+                              <button
+                                className="action-btn primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCompose?.(item.id);
+                                }}
+                              >
+                                ✏️ Edit & Forward
+                              </button>
+
+                              {/* DOWNLOAD */}
+                              <button
+                                className="action-btn secondary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(
+                                    `http://127.0.0.1:8000/circular/download/${encodeURIComponent(item.id)}`
+                                  );
+                                }}
+                              >
+                                ⬇ Download
+                              </button>
+
+                              {/* ARCHIVE */}
+                              <button
+                                className="action-btn secondary"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+
+                                  await authFetch(
+                                    `http://127.0.0.1:8000/circular/archive/${encodeURIComponent(item.id)}`,
+                                    { method: "PUT" }
+                                  );
+
+                                  onArchive(item.id);
+                                }}
+                              >
+                                🗂 Archive
                               </button>
                             </>
                           )}

@@ -92,13 +92,7 @@ function SentPage() {
         <SentCircularViewer circular={selectedCircular} onClose={() => setSelectedCircular(null)} />
       )}
 
-      <div className="bottom-status-bar">
-        <span className="status-dot"></span>
-        <span>Viewing: Sent</span>
-        <button className="primary-page-btn bottom-btn" onClick={() => navigate("/new-circular")}>
-          + New Circular
-        </button>
-      </div>
+      {/* bottom-status-bar removed per request */}
     </PageLayout>
   );
 }

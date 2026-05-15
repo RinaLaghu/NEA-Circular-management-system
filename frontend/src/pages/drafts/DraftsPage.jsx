@@ -77,17 +77,7 @@ function DraftsPage() {
         )}
       </div>
 
-      <div className="bottom-status-bar">
-        <span className="status-dot"></span>
-        <span>Viewing: Drafts</span>
-
-        <button
-          className="primary-page-btn bottom-btn"
-          onClick={() => navigate("/new-circular")}
-        >
-          + New Circular
-        </button>
-      </div>
+      {/* bottom-status-bar removed per request */}
     </PageLayout>
   );
 }

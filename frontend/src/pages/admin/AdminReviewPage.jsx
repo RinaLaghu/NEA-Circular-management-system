@@ -1,13 +1,12 @@
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
-import StatCard from "@/components/ui/StatCard";
 import CircularTable from "@/components/circular/CircularTable";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import filterIcon from "@/assets/filter.png";
 import downloadIcon from "@/assets/download.png";
 
-function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn, isAdministration }) {
+function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn }) {
   if (!circular) return null;
 
   const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
@@ -32,18 +31,12 @@ function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn, i
         )}
 
         <div className="viewer-actions">
-          {circular.file_url && (
-            <a href={`http://127.0.0.1:8000/circular/download/${circular.id}`} download className="action-btn">Download</a>
+          {circular.status === "pending_approval" && (
+            <button onClick={() => onCompose?.(circular.id)} className="action-btn">
+              Edit & Send
+            </button>
           )}
 
-
-          {isLoggedIn && (
-            <>
-              <button onClick={() => onArchive(circular.id)} className="action-btn">
-                Archive
-              </button>
-            </>
-          )}
 
           <button onClick={onClose} className="action-btn secondary">
             Cancel
@@ -54,9 +47,8 @@ function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn, i
   );
 }
 
-function CircularDashboard() {
+function AdminReviewPage() {
   const [circulars, setCirculars] = useState([]);
-  const [stats, setStats] = useState({ total: 0, unread: 0, archived: 0, sent: 0 });
 
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({
@@ -64,7 +56,7 @@ function CircularDashboard() {
     department: ""
   });
 
-  const [statusFilter, setStatusFilter] = useState(""); // ✅ READ/UNREAD TOGGLE
+  const [statusFilter, setStatusFilter] = useState("");
   const [selectedCircular, setSelectedCircular] = useState(null);
   const navigate = useNavigate();
 
@@ -83,53 +75,30 @@ function CircularDashboard() {
   };
 
   useEffect(() => {
+    if (!isAdministration) {
+      navigate("/inbox");
+      return;
+    }
+
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/all-circulars");
+      navigate("/login");
       return;
     }
     const headers = token ? { "Authorization": `Bearer ${token}` } : {};
 
-    fetch("http://127.0.0.1:8000/circular/inbox", { headers })
+    // Fetch pending approvals from same directorate
+    fetch("http://127.0.0.1:8000/circular/admin-review", { headers })
       .then((res) => {
         if (!res.ok) throw new Error("Failed");
         return res.json();
       })
       .then((data) => setCirculars(data || []))
       .catch(e => console.error(e));
+  }, [isAdministration]);
 
-    fetch("http://127.0.0.1:8000/circular/stats", { headers })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed");
-        return res.json();
-      })
-      .then((data) => setStats(data || {}))
-      .catch(e => console.error(e));
-  }, []);
-
-  // ✅ MARK AS READ WHEN OPENED
   const handleView = async (c) => {
     setSelectedCircular(c);
-
-    if (c.status?.toLowerCase() === "unread") {
-      const token = localStorage.getItem("token");
-      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-      await fetch(
-        `http://127.0.0.1:8000/circular/read/${encodeURIComponent(c.id)}`,
-        { method: "PUT", headers }
-      );
-
-      setCirculars((prev) =>
-        prev.map((item) =>
-          item.id === c.id ? { ...item, status: "read" } : item
-        )
-      );
-
-      setStats((prev) => ({
-        ...prev,
-        unread: Math.max(0, prev.unread - 1),
-      }));
-    }
   };
 
   const handleArchive = async (id) => {
@@ -141,11 +110,9 @@ function CircularDashboard() {
     );
 
     setCirculars((prev) => prev.filter((c) => c.id !== id));
-    setStats((prev) => ({ ...prev, archived: prev.archived + 1 }));
     setSelectedCircular(null);
   };
 
-  // ✅ FILTER (UNCHANGED LOGIC, FIXED READ/UNREAD)
   const filtered = circulars.filter((c) => {
     const matchPriority = filters.priority
       ? c.priority?.toLowerCase() === filters.priority.toLowerCase()
@@ -218,82 +185,38 @@ function CircularDashboard() {
         <Topbar />
 
         <div className="dashboard-content">
-
-          {/* HEADER */}
           <div className="page-header">
             <div>
-              <p className="portal-path">PORTAL / <span>{isLoggedIn ? "INBOX" : "CIRCULARS"}</span></p>
-              <h1>Administrative Circular</h1>
+              <p className="portal-path">PORTAL / ADMIN REVIEW</p>
+              <h1>Admin Review</h1>
             </div>
           </div>
 
-
-          {/* STATS */}
-          {isLoggedIn && (
-            <div className="stats-grid">
-              <StatCard title="Total" value={stats.total} />
-              <StatCard title="Unread" value={stats.unread} accent="red" />
-              <StatCard title="Archived" value={stats.archived} accent="gray" />
-            </div>
-          )}
-
-          {/* TABLE SECTION (FIXED LEGEND ONLY) */}
           <div className="table-section">
             <div className="table-header">
-              <h3>{isLoggedIn ? "Inbox / Latest Circulars" : "Latest Circulars"}</h3>
-
-              {/* ✅ LEGEND FIXED */}
-              {isLoggedIn && (
-                <div className="legend">
-                  <span
-                    className={`legend-item ${statusFilter === "unread" ? "active" : ""}`}
-                    onClick={() =>
-                      setStatusFilter(statusFilter === "unread" ? "" : "unread")
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    <span className="dot unread"></span> Unread
-                  </span>
-
-                  <span
-                    className={`legend-item ${statusFilter === "read" ? "active" : ""}`}
-                    onClick={() =>
-                      setStatusFilter(statusFilter === "read" ? "" : "read")
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    <span className="dot read"></span> Read
-                  </span>
-                </div>
-              )}
+              <h3>Pending Circulars from Internal Departments</h3>
             </div>
 
-            {/* TABLE */}
             <CircularTable
               circulars={filtered}
-              onArchive={handleArchive}
               onView={handleView}
               onCompose={handleCompose}
-              isAdministration={isAdministration}
+              mode="admin-review"
             />
           </div>
 
-          {/* VIEWER */}
           {selectedCircular && (
             <CircularViewer
               circular={selectedCircular}
               onClose={() => setSelectedCircular(null)}
-              onArchive={handleArchive}
               onCompose={handleCompose}
               isLoggedIn={isLoggedIn}
-              isAdministration={isAdministration}
             />
           )}
-
         </div>
       </div>
     </div>
   );
 }
 
-export default CircularDashboard;
+export default AdminReviewPage;

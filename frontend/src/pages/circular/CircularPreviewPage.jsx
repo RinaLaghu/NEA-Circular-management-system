@@ -11,6 +11,8 @@ function CircularPreviewPage({ data, onBack, onSend, isAdministration }) {
     externalDepts,
     bodyText,
     files,
+    fromDepartment,
+    fromDirectorate,
   } = data;
 
   const internalNames = selectedInternal
@@ -34,7 +36,9 @@ function CircularPreviewPage({ data, onBack, onSend, isAdministration }) {
   const externalNames = selectedExternal
     .map((id) => {
       const name = externalDepts?.find((d) => d.id === id)?.name;
-      return name ? (DIRECTORATE_NAMES[name] ? `${name} - ${DIRECTORATE_NAMES[name]}` : name) : null;
+      if (!name) return null;
+      const fullName = DIRECTORATE_NAMES[name] || Object.values(DIRECTORATE_NAMES).find((value) => value === name) || name;
+      return fullName;
     })
     .filter(Boolean)
     .join(", ") || "—";
@@ -178,7 +182,7 @@ const handlePrint = () => {
                 <tr>
                   <td style={tdLabel}>From</td>
                   <td style={tdColon}>:</td>
-                  <td style={tdValue}>Administration Office, NEA</td>
+                  <td style={tdValue}>{fromDirectorate ? `${fromDirectorate} - ${fromDepartment}` : "Administration Office, NEA"}</td>
                 </tr>
                 <tr>
                   <td style={tdLabel}>To</td>
@@ -280,7 +284,7 @@ const handlePrint = () => {
           </button>
           {/* All departments can send, no longer restricted to just administration, backend validates permissions */}
           <button type="button" className="nc-primary-btn" onClick={onSend}>
-            ➤ Confirm & Send
+            ➤ Confirm & Send Now
           </button>
         </div>
       </div>

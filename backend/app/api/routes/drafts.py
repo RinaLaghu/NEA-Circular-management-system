@@ -24,10 +24,9 @@ def list_drafts(
     """
     return (
         db.query(Circular)
-        .join(Department, Circular.sender_department_id == Department.id)
         .filter(
             Circular.status == "draft",
-            Department.directorate_id == current_dept.directorate_id
+            Circular.sender_department_id == current_dept.id
         )
         .all()
     )

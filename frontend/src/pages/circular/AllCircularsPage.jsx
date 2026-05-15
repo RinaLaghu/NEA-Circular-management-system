@@ -1,31 +1,117 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
+import CircularTable from "@/components/circular/CircularTable";
+
+function CircularViewer({ circular, onClose }) {
+  if (!circular) return null;
+
+  const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
+  const isPDF = circular.file_url?.endsWith(".pdf");
+  const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
+
+  return (
+    <div className="viewer-overlay" onClick={onClose}>
+      <div className="viewer-box" style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+        <h2 style={{ borderBottom: "1px solid #eee", paddingBottom: "10px" }}>{circular.subject}</h2>
+
+        <div style={{ margin: "20px 0", fontSize: "15px", lineHeight: "1.6", whiteSpace: "pre-wrap", color: "#333" }}>
+          {circular.description}
+        </div>
+
+        <div style={{ display: "grid", gap: "8px", marginBottom: "20px", color: "#555", fontSize: "14px" }}>
+          <div><strong>Reference:</strong> {circular.reference_no || circular.id}</div>
+          <div><strong>Directorate:</strong> {circular.department}</div>
+          <div><strong>Priority:</strong> {circular.priority}</div>
+          <div><strong>Date:</strong> {circular.date}{circular.time ? ` • ${circular.time}` : ""}</div>
+        </div>
+
+        {circular.file_url && (isPDF || isImage) && (
+          <div style={{ marginTop: "30px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
+            <h4 style={{ marginBottom: "15px", color: "#666" }}>Attachment:</h4>
+            {isPDF && <iframe src={fileUrl} width="100%" height="500px" style={{ border: "1px solid #ccc", borderRadius: "4px" }} />}
+            {isImage && <img src={fileUrl} alt="attachment preview" style={{ maxWidth: "100%", borderRadius: "4px", border: "1px solid #ccc" }} />}
+          </div>
+        )}
+
+        <div className="viewer-actions">
+          {circular.file_url && (
+            <a href={`http://127.0.0.1:8000/circular/download/${circular.id}`} download className="action-btn">
+              Download
+            </a>
+          )}
+
+          <button onClick={onClose} className="action-btn secondary">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AllCircularsPage() {
   const [circulars, setCirculars] = useState([]);
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
+  const [activeId, setActiveId] = useState(null);
+  const [selectedCircular, setSelectedCircular] = useState(null);
+
+  const DIRECTORATE_NAMES = {
+    A: "Planning, Monitoring and IT",
+    B: "Business Development",
+    C: "Administration",
+    D: "Finance",
+    E: "Generation",
+    F: "Transmission",
+    G: "Distribution & Consumer Services",
+    H: "Engineering Service",
+    I: "Project Management",
+    X: "BOARD OF DIRECTORS",
+  };
+
+  const formatDepartmentLabel = (department) => {
+    if (!department) return department;
+
+    const parts = department.split(" - ");
+    const code = parts[0]?.trim();
+    const suffix = parts.slice(1).join(" - ");
+    const directorateName = DIRECTORATE_NAMES[code];
+
+    return directorateName
+      ? `${directorateName}${suffix ? ` - ${suffix}` : ""}`
+      : department;
+  };
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/circular/inbox")
-      .then(res => res.json())
-      .then(data => {
-        // Sort newest → oldest
-        const sorted = data.sort(
-          (a, b) => new Date(b.date) - new Date(a.date)
-        );
+    fetch("http://127.0.0.1:8000/circular/")
+      .then((res) => res.json())
+      .then((data) => {
+        const sorted = (data || []).sort((a, b) => new Date(b.date) - new Date(a.date));
         setCirculars(sorted);
+      })
+      .catch((error) => {
+        console.error("Unable to load circulars:", error);
       });
   }, []);
 
-  // Filter logic
-  const filteredCirculars = circulars.filter(c => {
+  const filteredCirculars = circulars.filter((c) => {
+    const matchesSearch =
+      c.subject?.toLowerCase().includes(search.toLowerCase()) ||
+      c.description?.toLowerCase().includes(search.toLowerCase());
+
     return (
-      c.subject.toLowerCase().includes(search.toLowerCase()) &&
+      matchesSearch &&
       (departmentFilter === "" || c.department === departmentFilter)
     );
   });
+
+  const uniqueDepartments = [...new Set(circulars.map((c) => c.department).filter(Boolean))];
+
+  const handleView = (circular) => {
+    setSelectedCircular(circular);
+    setActiveId(circular.id);
+  };
 
   return (
     <div className="dashboard-layout">
@@ -45,70 +131,45 @@ function AllCircularsPage() {
             </div>
           </div>
 
-          <div
-  style={{
-    display: "flex",
-    gap: "10px",
-    marginBottom: "20px",
-    alignItems: "center",
-    flexWrap: "nowrap"
-  }}
->
-  {/* SEARCH */}
-  <input
-    type="text"
-    placeholder="Search circular..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    style={{
-      padding: "8px",
-      width: "250px"
-    }}
-  />
+          <div className="table-header" style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "20px" }}>
+            <input
+              type="text"
+              placeholder="Search circulars..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ padding: "10px 12px", minWidth: "240px", flex: "1 1 240px" }}
+            />
 
-  {/* DEPARTMENT */}
-  <select
-    value={departmentFilter}
-    onChange={(e) => setDepartmentFilter(e.target.value)}
-    style={{
-      padding: "8px",
-      width: "200px"
-    }}
-  >
-    <option value="">All Departments</option>
-
-    {[...new Set(circulars.map(c => c.department))].map(dep => (
-      <option key={dep} value={dep}>
-        {dep}
-      </option>
-    ))}
-  </select>
-</div>
-
-          {/* TABLE / LIST */}
-          <div className="table-section">
-            {filteredCirculars.length === 0 ? (
-              <p>No circulars found.</p>
-            ) : (
-              filteredCirculars.map(c => (
-                <div
-                  key={c.id}
-                  style={{
-                    padding: "16px",
-                    border: "1px solid #ccc",
-                    borderRadius: "8px",
-                    marginBottom: "12px"
-                  }}
-                >
-                  <h3>{c.subject}</h3>
-                  <p>{c.description}</p>
-                  <small>
-                    {c.date} — {c.department}
-                  </small>
-                </div>
-              ))
-            )}
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              style={{ padding: "10px 12px", minWidth: "220px", flex: "0 0 220px" }}
+            >
+              <option value="">All Departments</option>
+              {uniqueDepartments.map((dep) => (
+                <option key={dep} value={dep}>
+                  {formatDepartmentLabel(dep)}
+                </option>
+              ))}
+            </select>
           </div>
+
+          <div className="table-section">
+            <CircularTable
+              circulars={filteredCirculars}
+              onView={handleView}
+              activeId={activeId}
+              setActiveId={setActiveId}
+              mode="all"
+            />
+          </div>
+
+          {selectedCircular && (
+            <CircularViewer
+              circular={selectedCircular}
+              onClose={() => setSelectedCircular(null)}
+            />
+          )}
         </div>
       </div>
     </div>

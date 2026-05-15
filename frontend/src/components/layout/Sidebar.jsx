@@ -18,6 +18,7 @@ function Sidebar() {
   const canSendCircular = isLoggedIn;
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const navItem = (to, icon, label, badge) => (
     <NavLink
@@ -35,6 +36,7 @@ function Sidebar() {
   useEffect(() => {
     if (!isLoggedIn) {
       setUnreadCount(0);
+      setPendingCount(0);
       return;
     }
 
@@ -47,6 +49,7 @@ function Sidebar() {
         if (!res.ok) return;
         const data = await res.json();
         setUnreadCount(data.unread || 0);
+        setPendingCount(data.pending || 0);
       } catch (err) {
         console.error("Failed to load sidebar stats:", err);
       }
@@ -84,12 +87,12 @@ function Sidebar() {
         <nav className="sidebar-nav">
           {!isLoggedIn ? (
             <div className="guest-nav">
-              {navItem("/inbox", <Inbox size={18} />, "Inbox")}
               {navItem("/all-circulars", <LayoutList size={18} />, "All Circulars")}
             </div>
           ) : (
             <>
               {navItem("/inbox", <Inbox size={18} />, "Inbox", unreadCount > 0 ? unreadCount : null)}
+              {isAdministration && navItem("/admin-review", <LayoutList size={18} />, "Admin Review", pendingCount > 0 ? pendingCount : null)}
               {navItem("/sent", <Send size={18} />, "Sent")}
               {navItem("/drafts", <DraftingCompass size={18} />, "Drafts")}
               {navItem("/archive", <Archive size={18} />, "Archive")}
