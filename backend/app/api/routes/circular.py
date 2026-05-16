@@ -371,7 +371,7 @@ def get_allowed_recipients(
         external_directorates = []
 
     return {
-        "internal": [{"id": d.id, "name": d.name} for d in internal_depts if d],
+        "internal": [{"id": d.id, "name": d.name, "directorate_id": d.directorate_id} for d in internal_depts if d],
         "external": [{"id": dir.id, "name": dir.name} for dir in external_directorates]
     }
 
