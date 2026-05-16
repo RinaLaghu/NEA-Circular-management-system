@@ -15,7 +15,7 @@ function Login() {
     D: ["Corporation Finance", "Accounts", "Regulatory Compliance","Retirement Fund Management Division","Administration Section"],
     E: ["Large Generation Operation and Maintenance", "Medium Generation Operation and Maintenance","Generation Development and Support","Administration Division","Finance Division"],
     F: ["High Voltage Grid Development","Medium Voltage Grid Development","Power System Operation","Grid Operation","Civil Division","Transmission Line and Substation Design Division","Administration Division","Finance Division"],
-    G: ["Planning and Technical Service","Smart Metering and Automation","Community and Rural Electrification","Administration Section"],
+    G: ["Planning and Technical Service","Smart Metering and Automation","Community and Rural Electrification","Administration Section", "Koshi Province", "Madhesh Province", "Bagmati Province", "Gandaki Province", "Lumbini Province", "Karnali Province", "Sudurpaschim Province"],
     H: ["Project Development","Environment and Social Studies","Geological Investigation","Administration Section"],
     I: ["Transmission Line and Substation","Distribution Line and Substation","Social Safeguard and Environment Management","Administration Section"]
   };
@@ -26,17 +26,17 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showProvinceDropdown, setShowProvinceDropdown] =
-  useState(false);
-
-const [selectedProvince, setSelectedProvince] =
-  useState("");
 
   const handleDirectorateChange = (e) => {
     const value = e.target.value;
     setDirectorate(value);
     setDepartments(departmentData[value] || []);
     setSelectedDepartment("");
+  };
+
+  const handleDepartmentChange = (e) => {
+    const value = e.target.value;
+    setSelectedDepartment(value);
   };
 
   const handleLogin = async () => {
@@ -99,76 +99,11 @@ const [selectedProvince, setSelectedProvince] =
             <option value="H">Engineering Service</option>
             <option value="I">Project Management</option>
           </select>
-        {/* SHOW ONLY FOR DISTRIBUTION */}
-{directorate === "G" && (
-  <div style={{ marginTop: "12px" }}>
 
-    <button
-      type="button"
-      className="nc-secondary-btn"
-      onClick={() =>
-        setShowProvinceDropdown(
-          !showProvinceDropdown
-        )
-      }
-    >
-      Open Distribution Controls
-    </button>
-
-    {showProvinceDropdown && (
-      <div style={{ marginTop: "10px" }}>
-
-        <label>PROVINCE</label>
-
-        <select
-          value={selectedProvince}
-          onChange={(e) =>
-            setSelectedProvince(e.target.value)
-          }
-        >
-          <option value="" disabled hidden>
-            Select Province
-          </option>
-
-          <option value="Koshi">
-            Koshi Province
-          </option>
-
-          <option value="Madhesh">
-            Madhesh Province
-          </option>
-
-          <option value="Bagmati">
-            Bagmati Province
-          </option>
-
-          <option value="Gandaki">
-            Gandaki Province
-          </option>
-
-          <option value="Lumbini">
-            Lumbini Province
-          </option>
-
-          <option value="Karnali">
-            Karnali Province
-          </option>
-
-          <option value="Sudurpashchim">
-            Sudurpashchim Province
-          </option>
-
-        </select>
-
-      </div>
-    )}
-
-  </div>
-)}
           <label>DEPARTMENT</label>
           <select
             value={selectedDepartment}
-            onChange={(e) => setSelectedDepartment(e.target.value)}
+            onChange={handleDepartmentChange}
           >
             <option value="" hidden>Select Department</option>
             {departments.map((dep, index) => (
