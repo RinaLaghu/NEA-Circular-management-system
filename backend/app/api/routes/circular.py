@@ -63,10 +63,11 @@ def validate_routing(sender: Department, receiver: Department):
     if sender.directorate_id == receiver.directorate_id:
         return True
 
-    # 3. Between different directorates (Admin A -> Admin B)
+    # 3. Between different directorates (Admin A -> Admin B or Admin A -> Provinces)
     if sender.directorate_id != receiver.directorate_id:
-        if sender.is_administration and receiver.is_administration:
-            return True
+        if sender.is_administration:
+            if receiver.is_administration or "Province" in receiver.name:
+                return True
 
     return False
 
@@ -359,6 +360,17 @@ def get_allowed_recipients(
             Department.directorate_id == current_dept.directorate_id,
             Department.id != current_dept.id
         ).all()
+        
+        # Add provinces to internal_depts so they can be selected individually
+        provinces = db.query(Department).filter(
+            Department.name.like("%Province%")
+        ).all()
+        
+        # Don't add if they are already in internal_depts (i.e. if we are in G directorate)
+        for p in provinces:
+            if p not in internal_depts:
+                internal_depts.append(p)
+                
         external_directorates = db.query(Directorate).filter(
             Directorate.id != current_dept.directorate_id
         ).all()

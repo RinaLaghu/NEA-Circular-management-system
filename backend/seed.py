@@ -53,6 +53,13 @@ departments = [
     {"directorate": "G", "name": "Smart Metering and Automation", "password": "g123"},
     {"directorate": "G", "name": "Community and Rural Electrification", "password": "g123"},
     {"directorate": "G", "name": "Administration Section", "password": "g123"},
+    {"directorate": "G", "name": "Koshi Province", "password": "koshi"},
+    {"directorate": "G", "name": "Madhesh Province", "password": "madhesh"},
+    {"directorate": "G", "name": "Bagmati Province", "password": "bagmati"},
+    {"directorate": "G", "name": "Gandaki Province", "password": "gandaki"},
+    {"directorate": "G", "name": "Lumbini Province", "password": "lumbini"},
+    {"directorate": "G", "name": "Karnali Province", "password": "karnali"},
+    {"directorate": "G", "name": "Sudurpaschim Province", "password": "sudurpaschim"},
 
     # H - Engineering Services
     {"directorate": "H", "name": "Project Development", "password": "h123"},
