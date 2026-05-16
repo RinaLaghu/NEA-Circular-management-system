@@ -65,7 +65,7 @@ function DraftsPage() {
               key={draft.id}
               icon="📝"
               title={draft.subject || "Untitled Circular"}   // 🔥 fix
-              subtitle={`Ref: ${draft.reference_no || "-"} • ${draft.description || ""}`}
+              subtitle={`Ref: ${draft.reference_no || "-"}`}
               tag={(draft.priority || "routine").toUpperCase()} // 🔥 fix
               tagType={draft.priority || "routine"}
               actionLabel="Edit"

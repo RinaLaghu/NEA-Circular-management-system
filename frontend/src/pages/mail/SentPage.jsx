@@ -77,7 +77,7 @@ function SentPage() {
               <CircularListCard
                 icon="📤"
                 title={circular.subject || "Untitled Circular"}
-                subtitle={`Ref: ${circular.reference_no || "-"} • ${circular.description || ""}`}
+                subtitle={`Ref: ${circular.reference_no || "-"}`}
                 tag={(circular.priority || "routine").toUpperCase()}
                 tagType={circular.priority || "routine"}
                 date={circular.date || ""}
