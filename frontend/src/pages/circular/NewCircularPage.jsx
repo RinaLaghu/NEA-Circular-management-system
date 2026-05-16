@@ -18,9 +18,11 @@ function NewCircularPage() {
   
   const [selectedInternal, setSelectedInternal] = useState([]);
   const [selectedExternal, setSelectedExternal] = useState([]);
+  const [sendToEveryone, setSendToEveryone] = useState(false);
   const [bodyText, setBodyText] = useState("");
   const [files, setFiles] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [expandedDirs, setExpandedDirs] = useState({});
 
   useEffect(() => {
     // Fetch draft data if editing
@@ -106,6 +108,7 @@ function NewCircularPage() {
     }
   })();
   const isAdministration = deptData?.is_administration === true;
+  const isMd = deptData?.is_md === true;
 
   const saveDraft = async () => {
     if (!circularTitle.trim()) {
@@ -180,7 +183,7 @@ function NewCircularPage() {
       return;
     }
 
-    if (selectedInternal.length === 0 && selectedExternal.length === 0) {
+    if (!sendToEveryone && selectedInternal.length === 0 && selectedExternal.length === 0) {
       alert("Please select at least one recipient before sending.");
       return;
     }
@@ -192,6 +195,7 @@ function NewCircularPage() {
     formData.append("description", bodyText);
     formData.append("category", category);
     formData.append("priority", priority);
+    formData.append("send_to_all", sendToEveryone);
 
     let senderId = 1;
     try {
@@ -282,6 +286,7 @@ function NewCircularPage() {
           priority,
           selectedInternal,
           selectedExternal,
+          sendToEveryone,
           internalDepts,
           externalDepts,
           bodyText,
@@ -394,62 +399,187 @@ function NewCircularPage() {
             </div>
 
             <div className="nc-recipient-grid">
-              <div>
-                <div className="nc-section-mini-title">INTERNAL DEPARTMENTS</div>
-                {internalDepts.length === 0 && (
-                  <p style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}>No internal departments available.</p>
-                )}
-                {internalDepts.map((dept) => {
-                  const isSelected = selectedInternal.includes(dept.id);
-                  return (
-                    <button
-                      key={dept.id}
-                      type="button"
-                      className={`nc-dept-card ${
-                        isSelected ? "selected internal" : ""
-                      }`}
-                      onClick={() => toggleInternal(dept.id)}
-                    >
-                      <span className="nc-check-box">
-                        {isSelected ? "✓" : ""}
-                      </span>
-                      <div className="nc-dept-text">
-                        <span className="nc-dept-name">{dept.name}</span>
-                      </div>
-                    </button>
-                  );
-                })}
+            {isMd && (
+              <div style={{ gridColumn: "1 / -1", marginBottom: "1rem" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f0f8ff", padding: "12px", borderRadius: "8px", border: "1px solid #cce5ff", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={sendToEveryone}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSendToEveryone(checked);
+                      if (checked) {
+                        setSelectedInternal(internalDepts.map(d => d.id));
+                        setSelectedExternal(externalDepts.map(d => d.id));
+                      } else {
+                        setSelectedInternal([]);
+                        setSelectedExternal([]);
+                      }
+                    }}
+                    style={{ width: "18px", height: "18px" }}
+                  />
+                  <strong style={{ color: "#0056b3" }}>Broadcast / Send to Everyone (All Departments)</strong>
+                </label>
               </div>
+            )}
+              {isMd ? (
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <div className="nc-section-mini-title">DIRECTORATES & INTERNAL DEPARTMENTS</div>
+                  {externalDepts.map((dir) => {
+                    const isDirSelected = selectedExternal.includes(dir.id);
+                    const displayName = DIRECTORATE_NAMES[dir.name] ? `${dir.name} - ${DIRECTORATE_NAMES[dir.name]}` : dir.name;
+                    const depts = internalDepts.filter(d => d.directorate_id === dir.id);
 
-              <div>
-                <div className="nc-section-mini-title">EXTERNAL DIRECTORATES</div>
-                {externalDepts.length === 0 && (
-                  <p style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}>No external directorates available.</p>
-                )}
-
-                {externalDepts.map((dept) => {
-                  const isSelected = selectedExternal.includes(dept.id);
-                  const displayName = DIRECTORATE_NAMES[dept.name] ? `${dept.name} - ${DIRECTORATE_NAMES[dept.name]}` : dept.name;
-
-                  return (
-                    <button
-                      key={dept.id}
-                      type="button"
-                      className={`nc-dept-card ${
-                        isSelected ? "selected external" : ""
-                      }`}
-                      onClick={() => toggleExternal(dept.id)}
-                    >
-                      <span className="nc-check-box">
-                        {isSelected ? "✓" : ""}
-                      </span>
-                      <div className="nc-dept-text">
-                        <span className="nc-dept-name">{displayName}</span>
+                    return (
+                      <div key={dir.id} style={{ marginBottom: "1rem" }}>
+                        <div
+                          style={{ fontWeight: "bold", padding: "8px 12px", background: "#f8f9fa", border: "1px solid #dee2e6", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                        >
+                          <label style={{ display: "flex", gap: "12px", alignItems: "center", margin: 0, cursor: "pointer", flex: 1 }}>
+                            <input
+                              type="checkbox"
+                              checked={isDirSelected}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                toggleExternal(dir.id);
+                                if (checked) {
+                                  const deptIds = depts.map(d => d.id);
+                                  setSelectedInternal(prev => Array.from(new Set([...prev, ...deptIds])));
+                                } else {
+                                  const deptIds = depts.map(d => d.id);
+                                  setSelectedInternal(prev => prev.filter(id => !deptIds.includes(id)));
+                                }
+                              }}
+                              style={{ width: "18px", height: "18px" }}
+                            />
+                            <span>{displayName}</span>
+                          </label>
+                          {depts.length > 0 && (
+                            <span 
+                              onClick={() => setExpandedDirs(prev => ({ ...prev, [dir.name]: !prev[dir.name] }))}
+                              style={{ cursor: "pointer", padding: "4px 8px" }}
+                            >
+                              {expandedDirs[dir.name] ? "▼" : "▶"}
+                            </span>
+                          )}
+                        </div>
+                        {expandedDirs[dir.name] && depts.length > 0 && (
+                          <div style={{ paddingLeft: "32px", marginTop: "8px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                            {depts.map((dept) => {
+                              const isSelected = selectedInternal.includes(dept.id);
+                              return (
+                                <button
+                                  key={dept.id}
+                                  type="button"
+                                  className={`nc-dept-card ${isSelected ? "selected internal" : ""}`}
+                                  onClick={() => toggleInternal(dept.id)}
+                                >
+                                  <span className="nc-check-box">{isSelected ? "✓" : ""}</span>
+                                  <div className="nc-dept-text">
+                                    <span className="nc-dept-name">{dept.name}</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+
+                  {/* Render 'Other / MD' internal departments that don't belong to the above directorates */}
+                  {(() => {
+                    const otherDepts = internalDepts.filter(dept => !externalDepts.some(d => d.id === dept.directorate_id));
+                    if (otherDepts.length === 0) return null;
+                    return (
+                      <div style={{ marginBottom: "1rem" }}>
+                        <div
+                          style={{ cursor: "pointer", fontWeight: "bold", padding: "8px 12px", background: "#f8f9fa", border: "1px solid #dee2e6", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                          onClick={() => setExpandedDirs(prev => ({ ...prev, "Other": !prev["Other"] }))}
+                        >
+                          <span style={{ marginLeft: "30px" }}>Other / MD</span>
+                          <span>{expandedDirs["Other"] ? "▼" : "▶"}</span>
+                        </div>
+                        {expandedDirs["Other"] && (
+                          <div style={{ paddingLeft: "32px", marginTop: "8px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                            {otherDepts.map((dept) => {
+                              const isSelected = selectedInternal.includes(dept.id);
+                              return (
+                                <button
+                                  key={dept.id}
+                                  type="button"
+                                  className={`nc-dept-card ${isSelected ? "selected internal" : ""}`}
+                                  onClick={() => toggleInternal(dept.id)}
+                                >
+                                  <span className="nc-check-box">{isSelected ? "✓" : ""}</span>
+                                  <div className="nc-dept-text">
+                                    <span className="nc-dept-name">{dept.name}</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <div className="nc-section-mini-title">INTERNAL DEPARTMENTS</div>
+                    {internalDepts.length === 0 && (
+                      <p style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}>No internal departments available.</p>
+                    )}
+                    {internalDepts.map((dept) => {
+                      const isSelected = selectedInternal.includes(dept.id);
+                      return (
+                        <button
+                          key={dept.id}
+                          type="button"
+                          className={`nc-dept-card ${isSelected ? "selected internal" : ""}`}
+                          onClick={() => toggleInternal(dept.id)}
+                        >
+                          <span className="nc-check-box">{isSelected ? "✓" : ""}</span>
+                          <div className="nc-dept-text">
+                            <span className="nc-dept-name">{dept.name}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div>
+                    <div className="nc-section-mini-title">EXTERNAL DIRECTORATES</div>
+                    {externalDepts.length === 0 && (
+                      <p style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}>No external directorates available.</p>
+                    )}
+
+                    {externalDepts.map((dept) => {
+                      const isSelected = selectedExternal.includes(dept.id);
+                      const displayName = DIRECTORATE_NAMES[dept.name] ? `${dept.name} - ${DIRECTORATE_NAMES[dept.name]}` : dept.name;
+
+                      return (
+                        <button
+                          key={dept.id}
+                          type="button"
+                          className={`nc-dept-card ${
+                            isSelected ? "selected external" : ""
+                          }`}
+                          onClick={() => toggleExternal(dept.id)}
+                        >
+                          <span className="nc-check-box">
+                            {isSelected ? "✓" : ""}
+                          </span>
+                          <div className="nc-dept-text">
+                            <span className="nc-dept-name">{displayName}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

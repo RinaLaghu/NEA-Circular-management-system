@@ -54,6 +54,7 @@ def login_department(data: DepartmentLogin, db: Session = Depends(get_db)):
         "department": dept.name,
         "department_id": dept.id,
         "is_administration": dept.is_administration,
+        "is_md": dept.is_md,
     }
 
 
