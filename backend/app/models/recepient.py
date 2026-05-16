@@ -1,3 +1,4 @@
+from typing import Any
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from app.db.database import Base

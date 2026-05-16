@@ -15,7 +15,7 @@ function CircularPreviewPage({ data, onBack, onSend, isAdministration }) {
     fromDirectorate,
   } = data;
 
-  const internalNames = selectedInternal
+  const internalNames = data.sendToEveryone ? "—" : selectedInternal
     .map((id) => internalDepts?.find((d) => d.id === id)?.name)
     .filter(Boolean)
     .join(", ") || "—";
@@ -30,10 +30,11 @@ function CircularPreviewPage({ data, onBack, onSend, isAdministration }) {
     "G": "Distribution & Consumer Services",
     "H": "Engineering Service",
     "I": "Project Management",
-    "X": "BOARD OF DIRECTORS"
+    "X": "BOARD OF DIRECTORS",
+    "MD": "Managing Director"
   };
 
-  const externalNames = selectedExternal
+  const externalNames = data.sendToEveryone ? "ALL DEPARTMENTS" : selectedExternal
     .map((id) => {
       const name = externalDepts?.find((d) => d.id === id)?.name;
       if (!name) return null;

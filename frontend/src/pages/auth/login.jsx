@@ -8,7 +8,7 @@ function Login() {
   const navigate = useNavigate();
 
   const departmentData = {
-    X: ["NONE"],
+    MD: ["Managing Director"],
     A: ["Corporate Planning and Monitoring", "Power System Management", "Information Technology","Administration Section"],
     B: ["Energy Efficiency and Loss Reduction", "Power Trade", "Company Management","Business Promotion","Administration Section"],
     C: ["Human Resources", "General Services", "Legal","Recruitment Department","Administration Section"],
@@ -88,7 +88,7 @@ const [selectedProvince, setSelectedProvince] =
           <label>DIRECTORATE</label>
           <select value={directorate} onChange={handleDirectorateChange}>
             <option value="" hidden>Select Directorate</option>
-            <option value="X">Managing Director</option>
+            <option value="MD">Managing Director</option>
             <option value="A">Planning, Monitoring and IT</option>
             <option value="B">Business Development</option>
             <option value="C">Administration</option>

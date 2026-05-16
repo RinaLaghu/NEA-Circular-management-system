@@ -18,6 +18,7 @@ function NewCircularPage() {
   
   const [selectedInternal, setSelectedInternal] = useState([]);
   const [selectedExternal, setSelectedExternal] = useState([]);
+  const [sendToEveryone, setSendToEveryone] = useState(false);
   const [bodyText, setBodyText] = useState("");
   const [files, setFiles] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -106,6 +107,7 @@ function NewCircularPage() {
     }
   })();
   const isAdministration = deptData?.is_administration === true;
+  const isMd = deptData?.is_md === true;
 
   const saveDraft = async () => {
     if (!circularTitle.trim()) {
@@ -180,7 +182,7 @@ function NewCircularPage() {
       return;
     }
 
-    if (selectedInternal.length === 0 && selectedExternal.length === 0) {
+    if (!sendToEveryone && selectedInternal.length === 0 && selectedExternal.length === 0) {
       alert("Please select at least one recipient before sending.");
       return;
     }
@@ -192,6 +194,7 @@ function NewCircularPage() {
     formData.append("description", bodyText);
     formData.append("category", category);
     formData.append("priority", priority);
+    formData.append("send_to_all", sendToEveryone);
 
     let senderId = 1;
     try {
@@ -282,6 +285,7 @@ function NewCircularPage() {
           priority,
           selectedInternal,
           selectedExternal,
+          sendToEveryone,
           internalDepts,
           externalDepts,
           bodyText,
@@ -394,7 +398,20 @@ function NewCircularPage() {
             </div>
 
             <div className="nc-recipient-grid">
-              <div>
+            {isMd && (
+              <div style={{ gridColumn: "1 / -1", marginBottom: "1rem" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f0f8ff", padding: "12px", borderRadius: "8px", border: "1px solid #cce5ff", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={sendToEveryone}
+                    onChange={(e) => setSendToEveryone(e.target.checked)}
+                    style={{ width: "18px", height: "18px" }}
+                  />
+                  <strong style={{ color: "#0056b3" }}>Broadcast / Send to Everyone (All Departments)</strong>
+                </label>
+              </div>
+            )}
+              <div style={{ opacity: sendToEveryone ? 0.5 : 1, pointerEvents: sendToEveryone ? 'none' : 'auto' }}>
                 <div className="nc-section-mini-title">INTERNAL DEPARTMENTS</div>
                 {internalDepts.length === 0 && (
                   <p style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}>No internal departments available.</p>

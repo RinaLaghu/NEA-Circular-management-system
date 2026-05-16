@@ -65,6 +65,9 @@ departments = [
     {"directorate": "I", "name": "Distribution Line and Substation", "password": "i123"},
     {"directorate": "I", "name": "Social Safeguard and Environment Management", "password": "i123"},
     {"directorate": "I", "name": "Administration Section", "password": "i123"},
+
+    # MD - Managing Director
+    {"directorate": "MD", "name": "Managing Director", "password": "md123", "is_md": True},
 ]
 
 
@@ -88,12 +91,14 @@ def seed_data() -> None:
 
         for d in departments:
             is_admin = "Administration" in d["name"]
+            is_md = d.get("is_md", False)
             db.add(
                 Department(
                     directorate_id=directorate_map[d["directorate"]].id,
                     name=d["name"],
                     hashed_password=hash_password(d["password"]),
-                    is_administration=is_admin
+                    is_administration=is_admin,
+                    is_md=is_md
                 )
             )
 
