@@ -865,6 +865,12 @@ input {
   cursor: pointer;
 }
 
+.mini-action-btn:hover {
+  color: white;              
+  background: #082b63;       
+  border-color: #082b63;    
+}
+
 .list-date {
   color: #94a3b8;
   font-size: 15px;
