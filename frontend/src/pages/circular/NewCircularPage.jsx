@@ -39,11 +39,27 @@ function NewCircularPage() {
     }
 
     // Fetch recipients
+    const DIRECTORATE_NAMES_MAP = {
+      A: "Planning, Monitoring and IT",
+      B: "Business Development",
+      C: "Administration",
+      D: "Finance",
+      E: "Generation",
+      F: "Transmission",
+      G: "Distribution & Consumer Services",
+      H: "Engineering Service",
+      I: "Project Management",
+    };
+
     authFetch("http://127.0.0.1:8000/circular/recipients")
       .then((res) => res.json())
       .then((data) => {
         setInternalDepts(data.internal || []);
-        setExternalDepts(data.external || []);
+        // Only allow external directorates A..I (exclude MD/Board etc.)
+        const allowedExternal = (data.external || []).filter((d) => DIRECTORATE_NAMES_MAP[d.name]);
+        setExternalDepts(allowedExternal);
+        // Prune any previously selected external ids to only those allowed
+        setSelectedExternal((prev) => (prev || []).filter((id) => allowedExternal.some((d) => d.id === id)));
       })
       .catch((err) => console.error("Failed to load recipients:", err));
   }, [draftId]);
