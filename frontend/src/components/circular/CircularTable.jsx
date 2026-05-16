@@ -62,8 +62,7 @@ function CircularTable({
               {/* MAIN ROW */}
               <tr
                 onClick={() => {
-                  onView?.(item);  // ✅ safe — won't crash if not passed
-                  setActiveId?.(activeId === item.id ? null : item.id);
+                  onView?.(item);
                 }}
                 className={item.status?.toLowerCase() === "unread" ? "row-unread" : "row-read"}
                 style={{ cursor: "pointer", backgroundColor: item.status?.toLowerCase() === "unread" ? "#fdfdfd" : "inherit" }}
@@ -71,27 +70,22 @@ function CircularTable({
                 <td className="circular-id">{item.reference_no || item.id}</td>
 
                 <td>
-                  <div className="subject-cell">
-                    <div className="subject-title" style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: item.status?.toLowerCase() === "unread" ? 800 : 500, color: item.status?.toLowerCase() === "unread" ? "#000" : "#4b5563" }}>
-                      {item.subject}
-                      {item.status?.toLowerCase() === "unread" && (
-                        <span style={{
-                          backgroundColor: "#e74c3c",
-                          color: "white",
-                          fontSize: "10px",
-                          fontWeight: "bold",
-                          padding: "2px 6px",
-                          borderRadius: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          boxShadow: "0 0 8px rgba(231, 76, 60, 0.4)",
-                          animation: "pulse 2s infinite"
-                        }}>New</span>
-                      )}
-                    </div>
-                    <div className="subject-desc" style={{ color: item.status?.toLowerCase() === "unread" ? "#374151" : "#6b7280" }}>
-                      {item.description}
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: item.status?.toLowerCase() === "unread" ? 800 : 500, color: item.status?.toLowerCase() === "unread" ? "#000" : "#4b5563" }}>
+                    {item.subject}
+                    {item.status?.toLowerCase() === "unread" && (
+                      <span style={{
+                        backgroundColor: "#e74c3c",
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        padding: "2px 6px",
+                        borderRadius: "12px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        boxShadow: "0 0 8px rgba(231, 76, 60, 0.4)",
+                        animation: "pulse 2s infinite"
+                      }}>New</span>
+                    )}
                   </div>
                 </td>
 
@@ -120,150 +114,6 @@ function CircularTable({
                 </td>
 
               </tr>
-
-              {/* EXPANDED ROW */}
-              {activeId === item.id && (
-                <tr>
-                  <td colSpan="5">
-                    <div className="expand-wrapper">
-                      <div className="expand-content">
-
-                        <div style={{ marginBottom: "10px" }}>
-                          <strong>Description:</strong>{" "}
-                          {item.description}
-                        </div>
-
-                        <div style={{ display: "flex", gap: "10px" }}>
-
-                          {mode === "inbox" && (
-                            <>
-                              {/* DOWNLOAD */}
-                              <button
-                                className="action-btn secondary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(
-                                    `http://127.0.0.1:8000/circular/download/${encodeURIComponent(item.id)}`
-                                  );
-                                }}
-                              >
-                                ⬇ Download
-                              </button>
-
-                              {/* ARCHIVE */}
-                              <button
-                                className="action-btn secondary"
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-
-                                  const res = await fetch(
-                                    `http://127.0.0.1:8000/circular/archive/${encodeURIComponent(item.id)}`,
-                                    { method: "PUT" }
-                                  );
-
-                                  if (!res.ok) {
-                                    alert("Failed to archive circular");
-                                    return;
-                                  }
-
-                                  onArchive(item.id);
-
-                                }}
-                              >
-                                🗂 Archive
-                              </button>
-                            </>
-                          )}
-
-                          {mode === "archive" && (
-                            <>
-                              {/* UNARCHIVE */}
-                              <button
-                                className="action-btn secondary"
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-
-                                  await authFetch(
-                                    `http://127.0.0.1:8000/circular/unarchive/${encodeURIComponent(item.id)}`,
-                                    { method: "PUT" }
-                                  );
-
-                                  onUnarchive(item.id);
-                                }}
-                              >
-                                📥 Unarchive
-                              </button>
-
-                              {/* DELETE */}
-                              <button
-                                className="action-btn secondary"
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-
-                                  await authFetch(
-                                    `http://127.0.0.1:8000/circular/delete/${encodeURIComponent(item.id)}`,
-                                    { method: "DELETE" }
-                                  );
-
-                                  onDelete(item.id);
-                                }}
-                              >
-                                🗑 Delete
-                              </button>
-                            </>
-                          )}
-
-                          {mode === "admin-review" && item.status === "pending_approval" && (
-                            <>
-                              {/* EDIT & FORWARD */}
-                              <button
-                                className="action-btn primary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onCompose?.(item.id);
-                                }}
-                              >
-                                ✏️ Edit & Forward
-                              </button>
-
-                              {/* DOWNLOAD */}
-                              <button
-                                className="action-btn secondary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(
-                                    `http://127.0.0.1:8000/circular/download/${encodeURIComponent(item.id)}`
-                                  );
-                                }}
-                              >
-                                ⬇ Download
-                              </button>
-
-                              {/* ARCHIVE */}
-                              <button
-                                className="action-btn secondary"
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-
-                                  await authFetch(
-                                    `http://127.0.0.1:8000/circular/archive/${encodeURIComponent(item.id)}`,
-                                    { method: "PUT" }
-                                  );
-
-                                  onArchive(item.id);
-                                }}
-                              >
-                                🗂 Archive
-                              </button>
-                            </>
-                          )}
-
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
 
             </React.Fragment>
           ))}

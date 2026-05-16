@@ -54,7 +54,6 @@ function AllCircularsPage() {
   const [circulars, setCirculars] = useState([]);
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
-  const [activeId, setActiveId] = useState(null);
   const [selectedCircular, setSelectedCircular] = useState(null);
 
   const DIRECTORATE_NAMES = {
@@ -110,7 +109,6 @@ function AllCircularsPage() {
 
   const handleView = (circular) => {
     setSelectedCircular(circular);
-    setActiveId(circular.id);
   };
 
   return (
@@ -158,8 +156,6 @@ function AllCircularsPage() {
             <CircularTable
               circulars={filteredCirculars}
               onView={handleView}
-              activeId={activeId}
-              setActiveId={setActiveId}
               mode="all"
             />
           </div>
