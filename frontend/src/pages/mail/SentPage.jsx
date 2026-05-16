@@ -9,12 +9,19 @@ function SentCircularViewer({ circular, onClose }) {
   const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
   const isPDF = circular.file_url?.endsWith(".pdf");
   const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
+  const recipients = circular.department ? circular.department.split(",").map((r) => r.trim()) : [];
 
   return (
     <div className="viewer-overlay" onClick={onClose}>
       <div className="viewer-box" style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
         <h2 style={{ borderBottom: "1px solid #eee", paddingBottom: "10px" }}>{circular.subject}</h2>
-        
+        {/* ✅ ADD THIS */}
+{recipients.length > 0 && (
+  <div style={{ margin: "14px 0", fontSize: "14px", color: "#555" }}>
+    <strong>To: </strong>
+    {recipients.join(", ")}
+  </div>
+)}
         <div style={{ margin: "20px 0", fontSize: "15px", lineHeight: "1.6", whiteSpace: "pre-wrap", color: "#333" }}>
           {circular.description}
         </div>
@@ -50,6 +57,7 @@ function SentPage() {
         const headers = token ? { "Authorization": `Bearer ${token}` } : {};
         const res = await fetch("http://127.0.0.1:8000/circular/sent", { headers });
         const data = await res.json();
+        console.log("Sent circular sample:", data[0]); 
         setSentCirculars(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to load sent circulars:", error);
