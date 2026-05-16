@@ -7,7 +7,6 @@ from datetime import datetime
 import os
 import shutil
 from sqlalchemy.sql import func
-
 from app.deps.auth import require_admin_dept, get_current_dept
 from app.db.database import get_db
 from app.models.circular import Circular
@@ -406,7 +405,7 @@ def list_archived_circulars(
 # ─────────────────────────────────────────────
 
 @router.post("/draft")
-async def create_draft_circular(request: Request, db: Session = Depends(get_db)):
+async def create_draft_circular(request: Request, db: Session = Depends(get_db), file: UploadFile | None = File(None)):
     """Create a new draft circular (JSON or multipart)."""
     content_type = request.headers.get("content-type", "")
 
@@ -429,7 +428,7 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
         sender_department_id = form.get("sender_department_id")
         selected_internal_dept_ids = form.get("selected_internal_dept_ids", [])
         selected_external_directorate_ids = form.get("selected_external_directorate_ids", [])
-        file = form.get("file")
+       
 
     if not subject or not description or sender_department_id is None:
         raise HTTPException(
@@ -455,7 +454,7 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db))
 
     file_url = None
 
-    if file:
+    if file and file.filename:
         allowed_types = ["application/pdf", "image/jpeg", "image/png"]
 
         if file.content_type not in allowed_types:
@@ -506,6 +505,7 @@ async def send_new_circular(
     request: Request,
     db: Session = Depends(get_db),
     current_dept: Department = Depends(get_current_dept),
+     file: UploadFile | None = File(None),
 ):
     """Compose and send a circular immediately without saving a draft first."""
     content_type = request.headers.get("content-type", "")
@@ -529,7 +529,7 @@ async def send_new_circular(
         send_to_all = True if form.get("send_to_all", "false").lower() == "true" else False
         selected_internal_dept_ids = form.get("selected_internal_dept_ids", [])
         selected_external_directorate_ids = form.get("selected_external_directorate_ids", [])
-        file = form.get("file")
+        print("FILE URL SAVED:", file_url)
 
     if not subject or not description:
         raise HTTPException(
@@ -569,7 +569,7 @@ async def send_new_circular(
         raise HTTPException(status_code=403, detail="Routing blocked")
 
     file_url = None
-    if file and isinstance(file, UploadFile):
+    if file and file.filename:
         allowed_types = ["application/pdf", "image/jpeg", "image/png"]
         if file.content_type not in allowed_types:
             raise HTTPException(status_code=400, detail="Only PDF, JPG, and PNG files are allowed")
@@ -578,7 +578,7 @@ async def send_new_circular(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         file_url = f"/uploads/{filename}"
-
+        print("FILE URL SAVED:", file_url)  
     circular = Circular(
         reference_no=generate_reference_no(db),
         subject=subject,
