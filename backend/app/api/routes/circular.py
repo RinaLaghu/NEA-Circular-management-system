@@ -814,6 +814,68 @@ def send_circular(
     return circular
 
 
+# ─────────────────────────────────────────────
+# Forwarding (recipient admin can forward received circulars internally)
+# ─────────────────────────────────────────────
+
+
+@router.post("/{circular_id}/forward")
+def forward_circular(
+    circular_id: int,
+    payload: SendCircularPayload,
+    db: Session = Depends(get_db),
+    current_dept: Department = Depends(get_current_dept),
+):
+    """
+    Forward a received circular internally.
+    - Only administration departments that are recipients of the circular can forward it.
+    - Forwarding is restricted to internal departments within the forwarder's directorate.
+    - External directorate forwarding is not allowed via this action.
+    This creates a new circular record with the forwarder as sender so it appears in their Sent list.
+    """
+    circular = db.query(Circular).filter(Circular.id == circular_id).first()
+    if not circular:
+        raise HTTPException(status_code=404, detail="Circular not found")
+
+    # Ensure current dept is administration
+    if not current_dept.is_administration:
+        raise HTTPException(status_code=403, detail="Only administration departments can forward received circulars")
+
+    # Ensure current dept is a recipient of the circular
+    recipient_record = db.query(CircularRecipient).filter(
+        CircularRecipient.circular_id == circular_id,
+        CircularRecipient.department_id == current_dept.id
+    ).first()
+    if not recipient_record:
+        raise HTTPException(status_code=403, detail="You are not a recipient of this circular and cannot forward it")
+
+    # Only internal targets allowed for forward
+    internal_ids = payload.internal_dept_ids or []
+    if not internal_ids:
+        raise HTTPException(status_code=400, detail="No internal recipients specified for forwarding")
+
+    # Fetch departments and ensure they belong to current_dept.directorate_id
+    targets = db.query(Department).filter(Department.id.in_(internal_ids)).all()
+    valid_targets = [d for d in targets if d.directorate_id == current_dept.directorate_id and d.id != current_dept.id]
+
+    if not valid_targets:
+        raise HTTPException(status_code=400, detail="No valid internal target departments in your directorate")
+
+    # Attach recipient records to the original circular (do not create a new circular)
+    for d in valid_targets:
+        exists = db.query(CircularRecipient).filter_by(circular_id=circular.id, department_id=d.id).first()
+        if not exists:
+            db.add(CircularRecipient(circular_id=circular.id, department_id=d.id, status="unread"))
+
+    # Log the forward action in audit logs (keeps reference number intact)
+    db.add(AuditLog(circular_id=circular.id, actor_id=current_dept.id, action="forwarded"))
+
+    db.commit()
+    db.refresh(circular)
+
+    return circular
+
+
 @router.put("/{circular_id}/approve")
 def approve_circular(
     circular_id: int,

@@ -42,6 +42,10 @@ function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn, i
               <button onClick={() => onArchive(circular.id)} className="action-btn">
                 Archive
               </button>
+
+              {isAdministration && (
+                <ForwardButton circularId={circular.id} onClose={onClose} />
+              )}
             </>
           )}
 
@@ -51,6 +55,108 @@ function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn, i
         </div>
       </div>
     </div>
+  );
+}
+
+function ForwardButton({ circularId, onClose }) {
+  const [showModal, setShowModal] = React.useState(false);
+  const [internalDepts, setInternalDepts] = React.useState([]);
+  const [selected, setSelected] = React.useState([]);
+
+  const toggle = (id) => setSelected((s) => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
+
+  const open = async () => {
+    setShowModal(true);
+    try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+      const res = await fetch("http://127.0.0.1:8000/circular/recipients", { headers });
+      if (!res.ok) throw new Error("Failed to load recipients");
+      const data = await res.json();
+      setInternalDepts(data.internal || []);
+      setSelected([]);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to load recipient departments");
+      setShowModal(false);
+    }
+  };
+
+  const sendForward = async () => {
+    if (selected.length === 0) {
+      alert("Please select at least one internal department to forward to.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
+      const res = await fetch(`http://127.0.0.1:8000/circular/${encodeURIComponent(circularId)}/forward`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ internal_dept_ids: selected })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || "Failed to forward circular");
+        return;
+      }
+
+      alert("Circular forwarded successfully");
+      setShowModal(false);
+      onClose();
+      // Optionally navigate to sent; leave to user to view sent list
+    } catch (e) {
+      console.error(e);
+      alert("Failed to forward circular");
+    }
+  };
+
+  return (
+    <>
+      <button onClick={open} className="action-btn">
+        Forward
+      </button>
+
+      {showModal && (
+        <div className="viewer-overlay" onClick={() => setShowModal(false)}>
+          <div className="viewer-box" style={{ width: 560 }} onClick={(e) => e.stopPropagation()}>
+            <h3>Forward Internally</h3>
+            <p style={{ color: "#666" }}>Select internal departments in your directorate to forward this circular to.</p>
+
+            <div style={{ maxHeight: 360, overflow: "auto", marginTop: 12 }}>
+              {internalDepts.length === 0 && <p style={{ color: "#999" }}>No internal departments available.</p>}
+
+              <div className="nc-recipient-grid">
+                {internalDepts.map((d) => {
+                  const isSel = selected.includes(d.id);
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      className={`nc-dept-card ${isSel ? "selected internal" : ""}`}
+                      onClick={() => toggle(d.id)}
+                      style={{ display: "flex", alignItems: "center", gap: 10 }}
+                    >
+                      <span className="nc-check-box">{isSel ? "✓" : ""}</span>
+                      <div className="nc-dept-text">
+                        <div className="nc-dept-name">{d.name}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <button className="action-btn secondary" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="action-btn" onClick={sendForward}>Send Forward</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
