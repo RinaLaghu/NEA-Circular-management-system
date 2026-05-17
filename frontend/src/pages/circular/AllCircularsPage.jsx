@@ -69,11 +69,11 @@ function AllCircularsPage() {
     X: "BOARD OF DIRECTORS",
   };
 
-  const formatDepartmentLabel = (department) => {
-    if (!department) return "";
-    const parts = department.split(" - ");
-    return parts.length > 1 ? parts.slice(1).join(" - ").trim() : department.trim();
-  };
+const formatDirectorateOnly = (department) => {
+  if (!department) return department;
+  const code = department.split(" - ")[0]?.trim(); // take the first part (the alphabet code)
+  return DIRECTORATE_NAMES[code] || department;   // map to full directorate name
+};
 
 
   useEffect(() => {
@@ -88,21 +88,18 @@ function AllCircularsPage() {
       });
   }, []);
 
- const filteredCirculars = circulars.filter((c) => {
+  const filteredCirculars = circulars.filter((c) => {
     const matchesSearch =
       c.subject?.toLowerCase().includes(search.toLowerCase()) ||
       c.description?.toLowerCase().includes(search.toLowerCase());
 
-    const depLabel = formatDepartmentLabel(c.department);
     return (
       matchesSearch &&
-      (departmentFilter === "" || depLabel === departmentFilter)
+      (departmentFilter === "" || c.department === departmentFilter)
     );
   });
 
-  const uniqueDepartments = [
-    ...new Set(circulars.map((c) => formatDepartmentLabel(c.department)).filter(Boolean))
-  ];
+  const uniqueDepartments = [...new Set(circulars.map((c) => c.department).filter(Boolean))];
 
   const handleView = (circular) => {
     setSelectedCircular(circular);
@@ -138,15 +135,19 @@ function AllCircularsPage() {
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
+              style={{ padding: "10px 12px", minWidth: "220px", flex: "0 0 220px" }}
             >
-              <option value="">All Departments</option>
-              {uniqueDepartments.map((dep) => (
-                <option key={dep} value={dep}>
-                  {dep}
-                </option>
-              ))}
-            </select>
-
+                <option value="">All Directorates</option>
+                {uniqueDepartments.map((dep) => {
+                  const code = dep.split(" - ")[0]?.trim();       // extract alphabet
+                  const directorateName = DIRECTORATE_NAMES[code]; // map to full name
+                  return (
+                    <option key={dep} value={dep}>
+                      {directorateName || dep}   {/* ✅ label only directorate name */}
+                    </option>
+                  );
+                })}
+              </select>
           </div>
 
           <div className="table-section">
