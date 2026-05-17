@@ -70,17 +70,11 @@ function AllCircularsPage() {
   };
 
   const formatDepartmentLabel = (department) => {
-    if (!department) return department;
-
+    if (!department) return "";
     const parts = department.split(" - ");
-    const code = parts[0]?.trim();
-    const suffix = parts.slice(1).join(" - ");
-    const directorateName = DIRECTORATE_NAMES[code];
-
-    return directorateName
-      ? `${directorateName}${suffix ? ` - ${suffix}` : ""}`
-      : department;
+    return parts.length > 1 ? parts.slice(1).join(" - ").trim() : department.trim();
   };
+
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/circular/")
@@ -94,18 +88,21 @@ function AllCircularsPage() {
       });
   }, []);
 
-  const filteredCirculars = circulars.filter((c) => {
+ const filteredCirculars = circulars.filter((c) => {
     const matchesSearch =
       c.subject?.toLowerCase().includes(search.toLowerCase()) ||
       c.description?.toLowerCase().includes(search.toLowerCase());
 
+    const depLabel = formatDepartmentLabel(c.department);
     return (
       matchesSearch &&
-      (departmentFilter === "" || c.department === departmentFilter)
+      (departmentFilter === "" || depLabel === departmentFilter)
     );
   });
 
-  const uniqueDepartments = [...new Set(circulars.map((c) => c.department).filter(Boolean))];
+  const uniqueDepartments = [
+    ...new Set(circulars.map((c) => formatDepartmentLabel(c.department)).filter(Boolean))
+  ];
 
   const handleView = (circular) => {
     setSelectedCircular(circular);
@@ -141,15 +138,15 @@ function AllCircularsPage() {
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              style={{ padding: "10px 12px", minWidth: "220px", flex: "0 0 220px" }}
             >
               <option value="">All Departments</option>
               {uniqueDepartments.map((dep) => (
                 <option key={dep} value={dep}>
-                  {formatDepartmentLabel(dep)}
+                  {dep}
                 </option>
               ))}
             </select>
+
           </div>
 
           <div className="table-section">
