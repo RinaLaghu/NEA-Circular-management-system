@@ -279,9 +279,10 @@ function Login() {
       </div>
 
       <footer>
-        <div className="left">
-          <strong>Government of Nepal</strong><br/>
-          Ministry of Energy, Water Resources and Irrigation
+        <div className="left" style={{ fontSize: "13px", fontWeight: "bold" }}>
+          <a href="https://www.nea.org.np" target="_blank" rel="noopener noreferrer">
+            Website: www.nea.org.np
+          </a>
         </div>
 
         <div className="center" ref={footerLinksRef}>
@@ -297,7 +298,7 @@ function Login() {
         </div>
 
         <div className="right">
-          © 2024 NEA Circular Ledger v1.0
+          © 2026 NEA Circular Ledger v1.0
         </div>
       </footer>
 
