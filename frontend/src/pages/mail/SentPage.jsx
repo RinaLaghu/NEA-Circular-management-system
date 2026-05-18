@@ -38,12 +38,7 @@ function SentCircularViewer({ circular, onClose }) {
           {circular.file_url && (
             <button
               onClick={() => {
-                const link = document.createElement("a");
-                link.href = `http://127.0.0.1:8000${circular.file_url}`;
-                link.setAttribute("download", "");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                window.open(`http://127.0.0.1:8000${circular.file_url}`, "_blank");
               }}
               className="action-btn"
             >

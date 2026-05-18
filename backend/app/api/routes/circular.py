@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-import os
+import os, json
 import shutil
 from sqlalchemy.sql import func
 from app.deps.auth import require_admin_dept, get_current_dept
@@ -404,8 +404,13 @@ def list_archived_circulars(
 # Draft CRUD
 # ─────────────────────────────────────────────
 
+# ---------------- CREATE DRAFT ----------------
 @router.post("/draft")
-async def create_draft_circular(request: Request, db: Session = Depends(get_db), file: UploadFile | None = File(None)):
+async def create_draft_circular(
+    request: Request,
+    db: Session = Depends(get_db),
+    file: UploadFile | None = File(None)
+):
     """Create a new draft circular (JSON or multipart)."""
     content_type = request.headers.get("content-type", "")
 
@@ -418,7 +423,8 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db),
         sender_department_id = payload.get("sender_department_id")
         selected_internal_dept_ids = payload.get("selected_internal_dept_ids", [])
         selected_external_directorate_ids = payload.get("selected_external_directorate_ids", [])
-        file = None
+        # ⚠️ JSON cannot carry files → file_url stays None
+        file_url = None
     else:
         form = await request.form()
         subject = form.get("subject")
@@ -428,20 +434,27 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db),
         sender_department_id = form.get("sender_department_id")
         selected_internal_dept_ids = form.get("selected_internal_dept_ids", [])
         selected_external_directorate_ids = form.get("selected_external_directorate_ids", [])
-       
+
+        # ✅ Handle file if present
+        file_url = None
+        if file and file.filename:
+            allowed_types = ["application/pdf", "image/jpeg", "image/png"]
+            if file.content_type not in allowed_types:
+                raise HTTPException(status_code=400, detail="Only PDF, JPG, and PNG files are allowed")
+            filename = f"{datetime.now().timestamp()}_{file.filename}"
+            file_path = os.path.join(UPLOAD_DIR, filename)
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            file_url = f"/uploads/{filename}"
 
     if not subject or not description or sender_department_id is None:
-        raise HTTPException(
-            status_code=422,
-            detail="subject, description, and sender_department_id are required"
-        )
+        raise HTTPException(status_code=422, detail="subject, description, and sender_department_id are required")
 
     try:
         sender_department_id = int(sender_department_id)
     except (TypeError, ValueError):
         raise HTTPException(status_code=422, detail="sender_department_id must be an integer")
 
-    import json
     try:
         selected_internal = json.loads(selected_internal_dept_ids) if isinstance(selected_internal_dept_ids, str) else selected_internal_dept_ids
         selected_external = json.loads(selected_external_directorate_ids) if isinstance(selected_external_directorate_ids, str) else selected_external_directorate_ids
@@ -451,21 +464,6 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db),
     sender = db.query(Department).filter(Department.id == sender_department_id).first()
     if not sender:
         raise HTTPException(status_code=404, detail="Sender department not found")
-
-    file_url = None
-
-    if file and file.filename:
-        allowed_types = ["application/pdf", "image/jpeg", "image/png"]
-
-        if file.content_type not in allowed_types:
-            raise HTTPException(status_code=400, detail="Only PDF, JPG, and PNG files are allowed")
-        filename = f"{datetime.now().timestamp()}_{file.filename}"
-        file_path = os.path.join(UPLOAD_DIR, filename)
-
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        file_url = f"/uploads/{filename}"
 
     circular = Circular(
         reference_no=generate_reference_no(db),
@@ -481,7 +479,6 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db),
     )
 
     db.add(circular)
-
     for attempt in range(3):
         try:
             db.commit()
@@ -489,16 +486,49 @@ async def create_draft_circular(request: Request, db: Session = Depends(get_db),
             return circular
         except IntegrityError:
             db.rollback()
-
             if attempt == 2:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Unable to generate a unique reference number. Please retry."
-                )
-
+                raise HTTPException(status_code=500, detail="Unable to generate a unique reference number. Please retry.")
             circular.reference_no = generate_reference_no(db)
             db.add(circular)
 
+# ---------------- ADD ATTACHMENT ----------------
+@router.post("/draft/{circular_id}/attachment")
+async def add_draft_attachment(
+    circular_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    draft = db.query(Circular).filter(Circular.id == circular_id, Circular.status == "draft").first()
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    filename = f"{datetime.now().timestamp()}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    draft.file_url = f"/uploads/{filename}"
+    db.commit()
+    db.refresh(draft)
+    return draft
+
+# ---------------- REMOVE ATTACHMENT ----------------
+@router.delete("/draft/{circular_id}/attachment")
+async def remove_draft_attachment(circular_id: int, db: Session = Depends(get_db)):
+    draft = db.query(Circular).filter(Circular.id == circular_id, Circular.status == "draft").first()
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    # Optional: also delete file from disk
+    if draft.file_url:
+        file_path = draft.file_url.replace("/uploads/", UPLOAD_DIR + "/")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+    draft.file_url = None
+    db.commit()
+    db.refresh(draft)
+    return {"detail": "Attachment removed"}
 
 @router.post("/send")
 async def send_new_circular(
