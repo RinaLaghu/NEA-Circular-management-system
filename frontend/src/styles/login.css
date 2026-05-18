@@ -98,6 +98,7 @@ select option {
     color: red;
     font-size: 10px;
     cursor: pointer;
+    display: none; /* Hidden by default, shown when password is incorrect */
 }
 
 .password-box {
