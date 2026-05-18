@@ -7,6 +7,7 @@ import { authFetch } from "@/utils/api";
 function DraftsPage() {
   const navigate = useNavigate();
   const [drafts, setDrafts] = useState([]);
+  const [search, setSearch] = useState("");
 
   // FETCH DRAFTS
   useEffect(() => {
@@ -22,6 +23,16 @@ function DraftsPage() {
 
   fetchDrafts();
 }, []);
+
+  const filteredDrafts = drafts.filter((draft) => {
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      (draft.subject || "").toLowerCase().includes(query) ||
+      (draft.description || "").toLowerCase().includes(query) ||
+      (draft.reference_no || "").toLowerCase().includes(query)
+    );
+  });
 
   // DELETE DRAFT
   const deleteDraft = async (id) => {
@@ -52,15 +63,25 @@ function DraftsPage() {
       <div className="simple-page-header">
         <div>
           <h1>Drafts</h1>
-          <p className="simple-subtitle">{drafts.length} saved drafts</p>
+          <p className="simple-subtitle">{filteredDrafts.length} saved drafts</p>
         </div>
+      </div>
+
+      <div className="archive-search-wrap" style={{ marginTop: 18, marginBottom: 12 }}>
+        <input
+          type="text"
+          className="archive-search-input"
+          placeholder="Search drafts..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
       <div className="cards-stack">
         {drafts.length === 0 ? (
           <p className="simple-subtitle">No drafts found.</p>
         ) : (
-          drafts.map((draft) => (
+          filteredDrafts.map((draft) => (
             <CircularListCard
               key={draft.id}
               icon="📝"

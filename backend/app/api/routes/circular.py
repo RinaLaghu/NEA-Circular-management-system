@@ -202,6 +202,7 @@ def get_circular_stats(
         .join(Department, Circular.sender_department_id == Department.id)
         .filter(
             CircularRecipient.department_id == current_dept.id,
+            CircularRecipient.status != "archived",
             Circular.status == "sent",
             Circular.approval_status == "approved",
             Circular.is_archived == False,
@@ -215,6 +216,7 @@ def get_circular_stats(
         .filter(
             CircularRecipient.department_id == current_dept.id,
             CircularRecipient.status == "unread",
+            CircularRecipient.status != "archived",
             Circular.status == "sent",
             Circular.approval_status == "approved",
             Circular.is_archived == False,
@@ -240,14 +242,13 @@ def get_circular_stats(
 
     # Scoped to this dept's directorate so cross-directorate noise is excluded
     archived = (
-        db.query(Circular)
+        db.query(CircularRecipient)
+        .join(Circular, CircularRecipient.circular_id == Circular.id)
         .filter(
-            Circular.is_archived == True,
-            Circular.sender_department_id.in_(
-                db.query(Department.id).filter(
-                    Department.directorate_id == current_dept.directorate_id
-                )
-            )
+            CircularRecipient.department_id == current_dept.id,
+            CircularRecipient.status == "archived",
+            Circular.status == "sent",
+            Circular.approval_status == "approved",
         )
         .count()
     )
@@ -397,7 +398,25 @@ def list_archived_circulars(
     current_dept: Department = Depends(get_current_dept)
 ):
     """List archived circulars visible to the current department."""
-    return db.query(Circular).filter(Circular.is_archived == True).all()
+    rows = (
+        db.query(CircularRecipient, Circular)
+        .join(Circular, CircularRecipient.circular_id == Circular.id)
+        .filter(
+            CircularRecipient.department_id == current_dept.id,
+            CircularRecipient.status == "archived",
+            Circular.status == "sent",
+            Circular.approval_status == "approved",
+        )
+        .order_by(Circular.created_at.desc())
+        .all()
+    )
+
+    result = []
+    for recipient, c in rows:
+        c_dict = _circular_to_dict(c, db)
+        c_dict["status"] = "archived"
+        result.append(c_dict)
+    return result
 
 
 # ─────────────────────────────────────────────
@@ -1037,13 +1056,26 @@ def archive_circular(
     db: Session = Depends(get_db),
     current_dept: Department = Depends(get_current_dept)
 ):
+    recipient = (
+        db.query(CircularRecipient)
+        .filter(
+            CircularRecipient.circular_id == circular_id,
+            CircularRecipient.department_id == current_dept.id,
+        )
+        .first()
+    )
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient record not found")
+
+    recipient.status = "archived"
+    if recipient.read_at is None:
+        recipient.read_at = func.now()
+    db.commit()
+    db.refresh(recipient)
+
     circular = db.query(Circular).filter(Circular.id == circular_id).first()
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
-
-    circular.is_archived = True
-    db.commit()
-    db.refresh(circular)
     return circular
 
 
@@ -1053,13 +1085,24 @@ def unarchive_circular(
     db: Session = Depends(get_db),
     current_dept: Department = Depends(get_current_dept)
 ):
+    recipient = (
+        db.query(CircularRecipient)
+        .filter(
+            CircularRecipient.circular_id == circular_id,
+            CircularRecipient.department_id == current_dept.id,
+        )
+        .first()
+    )
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient record not found")
+
+    recipient.status = "read"
+    db.commit()
+    db.refresh(recipient)
+
     circular = db.query(Circular).filter(Circular.id == circular_id).first()
     if not circular:
         raise HTTPException(status_code=404, detail="Circular not found")
-
-    circular.is_archived = False
-    db.commit()
-    db.refresh(circular)
     return circular
 
 

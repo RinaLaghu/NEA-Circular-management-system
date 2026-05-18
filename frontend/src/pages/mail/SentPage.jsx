@@ -55,6 +55,7 @@ function SentCircularViewer({ circular, onClose }) {
 function SentPage() {
   const navigate = useNavigate();
   const [sentCirculars, setSentCirculars] = useState([]);
+  const [search, setSearch] = useState("");
   const [selectedCircular, setSelectedCircular] = useState(null);
 
   useEffect(() => {
@@ -73,6 +74,16 @@ function SentPage() {
     fetchSent();
   }, []);
 
+  const filteredCirculars = sentCirculars.filter((c) => {
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      (c.subject || "").toLowerCase().includes(query) ||
+      (c.description || "").toLowerCase().includes(query) ||
+      (c.reference_no || "").toLowerCase().includes(query)
+    );
+  });
+
   return (
     <PageLayout>
       <div className="simple-page-header sent-centered-header">
@@ -81,13 +92,23 @@ function SentPage() {
         </div>
       </div>
 
-      <p className="center-summary-text">{sentCirculars.length} circulars sent</p>
+      <div className="archive-search-wrap" style={{ marginTop: 16, marginBottom: 12 }}>
+        <input
+          type="text"
+          className="archive-search-input"
+          placeholder="Search sent circulars..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      <p className="center-summary-text">{filteredCirculars.length} circulars sent</p>
 
       <div className="cards-stack">
-        {sentCirculars.length === 0 ? (
+        {filteredCirculars.length === 0 ? (
           <p className="simple-subtitle">No sent circulars found.</p>
         ) : (
-          sentCirculars.map((circular) => (
+          filteredCirculars.map((circular) => (
             <div key={circular.id} onClick={() => setSelectedCircular(circular)} style={{ cursor: "pointer" }}>
               <CircularListCard
                 icon="📤"

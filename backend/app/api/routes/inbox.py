@@ -29,6 +29,7 @@ def list_inbox(db: Session = Depends(get_db), current_dept: Department = Depends
         .join(Department, Circular.sender_department_id == Department.id)
         .filter(
             CircularRecipient.department_id == current_dept.id,
+            CircularRecipient.status != "archived",
             Circular.status == "sent",
             Circular.approval_status == "approved",
             Circular.is_archived == False,
