@@ -176,6 +176,7 @@ function CircularDashboard() {
     priority: "",
     department: ""
   });
+  const [search, setSearch] = useState("");
 
   const [statusFilter, setStatusFilter] = useState(""); // ✅ READ/UNREAD TOGGLE
   const [selectedCircular, setSelectedCircular] = useState(null);
@@ -272,7 +273,12 @@ function CircularDashboard() {
       ? c.status?.toLowerCase() === statusFilter
       : true;
 
-    return matchPriority && matchDepartment && matchStatus;
+    const matchSearch = search
+      ? (c.subject || "").toLowerCase().includes(search.toLowerCase()) ||
+        (c.description || "").toLowerCase().includes(search.toLowerCase())
+      : true;
+
+    return matchPriority && matchDepartment && matchStatus && matchSearch;
   });
 
   const DIRECTORATE_NAMES = {
@@ -349,6 +355,16 @@ function CircularDashboard() {
               <StatCard title="Archived" value={stats.archived} accent="gray" />
             </div>
           )}
+
+          <div className="archive-search-wrap" style={{ marginTop: 18 }}>
+            <input
+              type="text"
+              className="archive-search-input"
+              placeholder="Search inbox circulars..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
           {/* TABLE SECTION (FIXED LEGEND ONLY) */}
           <div className="table-section">
