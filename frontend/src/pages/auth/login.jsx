@@ -52,7 +52,7 @@ function Login() {
  const footerDetails = {
   privacy: {
     title: "Privacy Policy",
-    subtitle: "How NEA protects login, circular, and workflow information.",
+    subtitle: "Ensure confidentiality of login details, circulars, and workflow processes.",
     points: [
       {
         label: "Data Collected",
@@ -99,7 +99,7 @@ function Login() {
       },
       {
         label: "Support Hours",
-        text: "Assistance is available during official NEA working hours, Sunday to Friday."
+        text: "Assistance is available during official NEA working hours, Monday to Friday."
       },
       {
         label: "Response Time",
