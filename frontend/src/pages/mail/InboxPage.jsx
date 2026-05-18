@@ -179,6 +179,7 @@ function CircularDashboard() {
     priority: "",
     department: ""
   });
+  const [departmentFilter, setDepartmentFilter] = useState("");
   const [search, setSearch] = useState("");
 
   const [statusFilter, setStatusFilter] = useState(""); // ✅ READ/UNREAD TOGGLE
@@ -268,8 +269,8 @@ function CircularDashboard() {
       ? c.priority?.toLowerCase() === filters.priority.toLowerCase()
       : true;
 
-    const matchDepartment = filters.department
-      ? c.department?.toLowerCase().includes(filters.department.toLowerCase())
+    const matchDepartment = departmentFilter
+      ? c.department === departmentFilter
       : true;
 
     const matchStatus = statusFilter
@@ -296,6 +297,8 @@ function CircularDashboard() {
     I: "Project Management",
     X: "BOARD OF DIRECTORS",
   };
+
+  const uniqueDepartments = [...new Set(circulars.map((c) => c.department).filter(Boolean))];
 
   const formatDepartmentLabel = (department) => {
     if (!department) return department;
@@ -359,14 +362,33 @@ function CircularDashboard() {
             </div>
           )}
 
-          <div className="archive-search-wrap" style={{ marginTop: 18 }}>
+          <div className="archive-search-wrap" style={{ marginTop: 18, display: "flex", flexWrap: "wrap", gap: "12px" }}>
             <input
               type="text"
               className="archive-search-input"
               placeholder="Search inbox circulars..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              style={{ flex: "1 1 320px" }}
             />
+
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="archive-search-input"
+              style={{ minWidth: 300, flex: "0 0 220px" }}
+            >
+              <option value="">All Directorates</option>
+              {uniqueDepartments.map((dep) => {
+                const code = dep.split(" - ")[0]?.trim();
+                const directorateName = DIRECTORATE_NAMES[code];
+                return (
+                  <option key={dep} value={dep}>
+                    {directorateName || dep}
+                  </option>
+                );
+              })}
+            </select>
           </div>
 
           {/* TABLE SECTION (FIXED LEGEND ONLY) */}
