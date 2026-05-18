@@ -62,9 +62,19 @@ function CircularViewer({ circular, onClose }) {
 
         <div className="viewer-actions">
           {circular.file_url && (
-            <a href={`http://127.0.0.1:8000/circular/download/${circular.id}`} download className="action-btn">
-              Download
-            </a>
+            <button
+              onClick={() => {
+                const link = document.createElement("a");
+                link.href = `http://127.0.0.1:8000${circular.file_url}`;
+                link.setAttribute("download", "");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+              className="action-btn"
+            >
+              View Attachment
+            </button>
           )}
 
           <button onClick={onClose} className="action-btn secondary">
