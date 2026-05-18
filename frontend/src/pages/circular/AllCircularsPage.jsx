@@ -69,18 +69,12 @@ function AllCircularsPage() {
     X: "BOARD OF DIRECTORS",
   };
 
-  const formatDepartmentLabel = (department) => {
-    if (!department) return department;
+const formatDirectorateOnly = (department) => {
+  if (!department) return department;
+  const code = department.split(" - ")[0]?.trim(); // take the first part (the alphabet code)
+  return DIRECTORATE_NAMES[code] || department;   // map to full directorate name
+};
 
-    const parts = department.split(" - ");
-    const code = parts[0]?.trim();
-    const suffix = parts.slice(1).join(" - ");
-    const directorateName = DIRECTORATE_NAMES[code];
-
-    return directorateName
-      ? `${directorateName}${suffix ? ` - ${suffix}` : ""}`
-      : department;
-  };
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/circular/")
@@ -143,13 +137,17 @@ function AllCircularsPage() {
               onChange={(e) => setDepartmentFilter(e.target.value)}
               style={{ padding: "10px 12px", minWidth: "220px", flex: "0 0 220px" }}
             >
-              <option value="">All Departments</option>
-              {uniqueDepartments.map((dep) => (
-                <option key={dep} value={dep}>
-                  {formatDepartmentLabel(dep)}
-                </option>
-              ))}
-            </select>
+                <option value="">All Directorates</option>
+                {uniqueDepartments.map((dep) => {
+                  const code = dep.split(" - ")[0]?.trim();       // extract alphabet
+                  const directorateName = DIRECTORATE_NAMES[code]; // map to full name
+                  return (
+                    <option key={dep} value={dep}>
+                      {directorateName || dep}   {/* ✅ label only directorate name */}
+                    </option>
+                  );
+                })}
+              </select>
           </div>
 
           <div className="table-section">

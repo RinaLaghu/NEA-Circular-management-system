@@ -557,7 +557,8 @@ function NewCircularPage() {
 
                     {externalDepts.map((dir) => {
                       const isDirSelected = selectedExternal.includes(dir.id);
-                      const displayName = DIRECTORATE_NAMES[dir.name] ? `${dir.name} - ${DIRECTORATE_NAMES[dir.name]}` : dir.name;
+                      const code = dir.name.split(" - ")[0]?.trim(); 
+                      const displayName = DIRECTORATE_NAMES[code] || dir.name;
                       
                       // Specific logic for G directorate showing administration and provinces
                       const isGDirectorate = dir.name === "G";
