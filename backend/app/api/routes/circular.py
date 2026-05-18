@@ -700,7 +700,7 @@ async def update_circular(
     circular.selected_internal_dept_ids = selected_internal
     circular.selected_external_directorate_ids = selected_external
 
-    if file:
+    if file and file.filename:
         allowed_types = ["application/pdf", "image/jpeg", "image/png"]
         if file.content_type not in allowed_types:
             raise HTTPException(status_code=400, detail="Only PDF, JPG, and PNG files allowed")
@@ -709,6 +709,7 @@ async def update_circular(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         circular.file_url = f"/uploads/{filename}"
+    # if no new file, keep existing file_url unchanged
 
     db.commit()
     db.refresh(circular)
