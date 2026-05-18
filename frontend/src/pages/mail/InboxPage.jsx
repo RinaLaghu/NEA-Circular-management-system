@@ -80,7 +80,10 @@ function ForwardButton({ circularId, onClose }) {
       const res = await fetch("http://127.0.0.1:8000/circular/recipients", { headers });
       if (!res.ok) throw new Error("Failed to load recipients");
       const data = await res.json();
-      setInternalDepts(data.internal || []);
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const currentDirectorateId = payload.directorate_id;
+      const filtered = (data.internal || []).filter(d => d.directorate_id === currentDirectorateId);
+      setInternalDepts(filtered);
       setSelected([]);
     } catch (e) {
       console.error(e);
