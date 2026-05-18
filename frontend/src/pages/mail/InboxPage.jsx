@@ -33,7 +33,14 @@ function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn, i
 
         <div className="viewer-actions">
           {circular.file_url && (
-            <a href={`http://127.0.0.1:8000/circular/download/${circular.id}`} download className="action-btn">Download</a>
+            <button
+              onClick={() => {
+                window.open(`http://127.0.0.1:8000${circular.file_url}`, "_blank");
+              }}
+              className="action-btn"
+            >
+              View Attachment
+            </button>
           )}
 
 
@@ -151,7 +158,7 @@ function ForwardButton({ circularId, onClose }) {
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
               <button className="action-btn secondary" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="action-btn" onClick={sendForward}>Send Forward</button>
+              <button className="action-btn" onClick={sendForward}>Send</button>
             </div>
           </div>
         </div>
