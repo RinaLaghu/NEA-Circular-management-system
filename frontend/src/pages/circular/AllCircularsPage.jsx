@@ -3,6 +3,31 @@ import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import CircularTable from "@/components/circular/CircularTable";
 
+const DIRECTORATE_NAMES = {
+    A: "Planning, Monitoring and IT",
+    B: "Business Development",
+    C: "Administration",
+    D: "Finance",
+    E: "Generation",
+    F: "Transmission",
+    G: "Distribution & Consumer Services",
+    H: "Engineering Service",
+    I: "Project Management",
+    X: "Managing Director",
+  };
+
+const formatDirectorateOnly = (department) => {
+  if (!department) return department;
+  const code = department.split(" - ")[0]?.trim(); // take the first part (the alphabet code)
+  return DIRECTORATE_NAMES[code] || department;   // map to full directorate name
+};
+
+const getDepartmentName = (department) => {
+  if (!department) return "Not specified";
+  const parts = department.split(" - ");
+  return parts.length > 1 ? parts[1].trim() : department;
+};
+
 function CircularViewer({ circular, onClose }) {
   if (!circular) return null;
 
@@ -21,7 +46,8 @@ function CircularViewer({ circular, onClose }) {
 
         <div style={{ display: "grid", gap: "8px", marginBottom: "20px", color: "#555", fontSize: "14px" }}>
           <div><strong>Reference:</strong> {circular.reference_no || circular.id}</div>
-          <div><strong>Directorate:</strong> {circular.department}</div>
+          <div><strong>Directorate:</strong> {formatDirectorateOnly(circular.department)|| "Unknown Directorate"}</div>
+          <div><strong>Department:</strong> {getDepartmentName(circular.department)}</div>
           <div><strong>Priority:</strong> {circular.priority}</div>
           <div><strong>Date:</strong> {circular.date}{circular.time ? ` • ${circular.time}` : ""}</div>
         </div>
@@ -36,9 +62,14 @@ function CircularViewer({ circular, onClose }) {
 
         <div className="viewer-actions">
           {circular.file_url && (
-            <a href={`http://127.0.0.1:8000/circular/download/${circular.id}`} download className="action-btn">
-              Download
-            </a>
+            <button
+              onClick={() => {
+                window.open(`http://127.0.0.1:8000${circular.file_url}`, "_blank");
+              }}
+              className="action-btn"
+            >
+              View Attachment
+            </button>
           )}
 
           <button onClick={onClose} className="action-btn secondary">
@@ -55,32 +86,6 @@ function AllCircularsPage() {
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [selectedCircular, setSelectedCircular] = useState(null);
-
-  const DIRECTORATE_NAMES = {
-    A: "Planning, Monitoring and IT",
-    B: "Business Development",
-    C: "Administration",
-    D: "Finance",
-    E: "Generation",
-    F: "Transmission",
-    G: "Distribution & Consumer Services",
-    H: "Engineering Service",
-    I: "Project Management",
-    X: "BOARD OF DIRECTORS",
-  };
-
-  const formatDepartmentLabel = (department) => {
-    if (!department) return department;
-
-    const parts = department.split(" - ");
-    const code = parts[0]?.trim();
-    const suffix = parts.slice(1).join(" - ");
-    const directorateName = DIRECTORATE_NAMES[code];
-
-    return directorateName
-      ? `${directorateName}${suffix ? ` - ${suffix}` : ""}`
-      : department;
-  };
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/circular/")
@@ -143,13 +148,17 @@ function AllCircularsPage() {
               onChange={(e) => setDepartmentFilter(e.target.value)}
               style={{ padding: "10px 12px", minWidth: "220px", flex: "0 0 220px" }}
             >
-              <option value="">All Departments</option>
-              {uniqueDepartments.map((dep) => (
-                <option key={dep} value={dep}>
-                  {formatDepartmentLabel(dep)}
-                </option>
-              ))}
-            </select>
+                <option value="">All Directorates</option>
+                {uniqueDepartments.map((dep) => {
+                  const code = dep.split(" - ")[0]?.trim();       // extract alphabet
+                  const directorateName = DIRECTORATE_NAMES[code]; // map to full name
+                  return (
+                    <option key={dep} value={dep}>
+                      {directorateName || dep}   {/* ✅ label only directorate name */}
+                    </option>
+                  );
+                })}
+              </select>
           </div>
 
           <div className="table-section">

@@ -529,7 +529,6 @@ async def send_new_circular(
         send_to_all = True if form.get("send_to_all", "false").lower() == "true" else False
         selected_internal_dept_ids = form.get("selected_internal_dept_ids", [])
         selected_external_directorate_ids = form.get("selected_external_directorate_ids", [])
-    
 
     if not subject or not description:
         raise HTTPException(

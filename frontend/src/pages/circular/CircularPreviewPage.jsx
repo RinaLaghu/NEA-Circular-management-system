@@ -18,7 +18,7 @@ function CircularPreviewPage({ data, onBack, onSend, isAdministration }) {
   const internalNames = data.sendToEveryone ? "—" : selectedInternal
     .map((id) => internalDepts?.find((d) => d.id === id)?.name)
     .filter(Boolean)
-    .join(", ") || "—";
+    .join(", ");
 
   const DIRECTORATE_NAMES = {
     "A": "Planning, Monitoring and IT",
@@ -42,7 +42,7 @@ function CircularPreviewPage({ data, onBack, onSend, isAdministration }) {
       return fullName;
     })
     .filter(Boolean)
-    .join(", ") || "—";
+    .join(", ");
 
   const priorityStyles = {
     routine: { background: "#E6F1FB", color: "#185FA5" },
@@ -183,14 +183,18 @@ const handlePrint = () => {
                 <tr>
                   <td style={tdLabel}>From</td>
                   <td style={tdColon}>:</td>
-                  <td style={tdValue}>{fromDirectorate ? `${fromDirectorate} - ${fromDepartment}` : "Administration Office, NEA"}</td>
+                  <td style={tdValue}>
+                    {DIRECTORATE_NAMES[fromDirectorate] 
+                      ? `${DIRECTORATE_NAMES[fromDirectorate]} - ${fromDepartment}` 
+                      : "Administration Office, NEA"}
+                  </td>
                 </tr>
                 <tr>
                   <td style={tdLabel}>To</td>
                   <td style={tdColon}>:</td>
                   <td style={tdValue}>
                     {internalNames}
-                    {externalNames !== "—" && `, ${externalNames}`}
+                    {externalNames && (internalNames ? `, ${externalNames}` : externalNames)}
                   </td>
                 </tr>
               </tbody>
@@ -206,7 +210,7 @@ const handlePrint = () => {
                   <td style={tdLabel}>Subject</td>
                   <td style={tdColon}>:</td>
                   <td style={{ ...tdValue, fontWeight: 500, fontSize: 15, color: "#1e3a5f" }}>
-                    {circularTitle || "—"}
+                    {circularTitle || ""}
                   </td>
                 </tr>
               </tbody>
