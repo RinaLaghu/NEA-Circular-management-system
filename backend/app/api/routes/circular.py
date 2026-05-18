@@ -529,7 +529,7 @@ async def send_new_circular(
         send_to_all = True if form.get("send_to_all", "false").lower() == "true" else False
         selected_internal_dept_ids = form.get("selected_internal_dept_ids", [])
         selected_external_directorate_ids = form.get("selected_external_directorate_ids", [])
-        print("FILE URL SAVED:", file_url)
+    
 
     if not subject or not description:
         raise HTTPException(
@@ -701,7 +701,7 @@ async def update_circular(
     circular.selected_internal_dept_ids = selected_internal
     circular.selected_external_directorate_ids = selected_external
 
-    if file:
+    if file and file.filename:
         allowed_types = ["application/pdf", "image/jpeg", "image/png"]
         if file.content_type not in allowed_types:
             raise HTTPException(status_code=400, detail="Only PDF, JPG, and PNG files allowed")
@@ -710,6 +710,7 @@ async def update_circular(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         circular.file_url = f"/uploads/{filename}"
+    # if no new file, keep existing file_url unchanged
 
     db.commit()
     db.refresh(circular)

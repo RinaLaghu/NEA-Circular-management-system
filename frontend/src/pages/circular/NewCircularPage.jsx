@@ -23,23 +23,32 @@ function NewCircularPage() {
   const [files, setFiles] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
   const [expandedDirs, setExpandedDirs] = useState({});
-
-  useEffect(() => {
-    // Fetch draft data if editing
-    if (draftId) {
-      authFetch(`http://127.0.0.1:8000/circular/${draftId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setCircularTitle(data.subject || "");
-          setBodyText(data.description || "");
-          setCategory(data.category || "Administrative Policy");
-          setPriority(data.priority || "routine");
-          setSelectedInternal(data.selected_internal_dept_ids || []);
-          setSelectedExternal(data.selected_external_directorate_ids || []);
-        })
-        .catch((err) => console.error("Failed to load draft:", err));
-    }
-
+useEffect(() => {
+  // Fetch draft data if editing
+  if (draftId) {
+    authFetch(`http://127.0.0.1:8000/circular/${draftId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCircularTitle(data.subject || "");
+        setBodyText(data.description || "");
+        setCategory(data.category || "Administrative Policy");
+        setPriority(data.priority || "routine");
+        setSelectedInternal(data.selected_internal_dept_ids || []);
+        setSelectedExternal(data.selected_external_directorate_ids || []);
+        if (data.file_url) {
+          setFiles([{
+            id: Date.now(),
+            file: null,
+            name: data.file_url.split("/").pop(),
+            size: "Already uploaded",
+            status: "ok",
+            error: "",
+            existingUrl: data.file_url,
+          }]);
+        }
+      })
+      .catch((err) => console.error("Failed to load draft:", err));
+  }
     // Fetch recipients
     const DIRECTORATE_NAMES_MAP = {
       A: "Planning, Monitoring and IT",
@@ -188,7 +197,8 @@ function NewCircularPage() {
       return;
     }
 
-    const validFile = files.find((f) => f.status === "ok");
+    const validFile = files.find((f) => f.status === "ok" && f.file !== null);
+const existingFileUrl = files.find((f) => f.existingUrl)?.existingUrl || null;
     const formData = new FormData();
 
     formData.append("subject", circularTitle);
@@ -206,10 +216,11 @@ function NewCircularPage() {
     formData.append("sender_department_id", senderId);
     formData.append("selected_internal_dept_ids", JSON.stringify(selectedInternal));
     formData.append("selected_external_directorate_ids", JSON.stringify(selectedExternal));
-
-    if (validFile) {
-      formData.append("file", validFile.file);
-    }
+if (validFile) {
+  formData.append("file", validFile.file);
+} else if (existingFileUrl) {
+  formData.append("existing_file_url", existingFileUrl);
+}
 
     if (draftId) {
       try {
