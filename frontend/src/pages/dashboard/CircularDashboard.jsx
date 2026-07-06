@@ -4,20 +4,21 @@ import Topbar from "@/components/layout/Topbar";
 import StatCard from "@/components/ui/StatCard";
 import CircularTable from "@/components/circular/CircularTable";
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/utils/config";
 
 function CircularDashboard() {
   const [circulars, setCirculars] = useState([]);
   const [stats, setStats] = useState({ total: 0, unread: 0, archived: 0 });
 
   const refreshStats = () => {
-    authFetch("http://127.0.0.1:8000/circular/stats")
+    authFetch(`${API_BASE_URL}/circular/stats`)
       .then((res) => res.json())
       .then((data) => setStats(data))
       .catch((e) => console.error("Stats refresh failed:", e));
   };
 
   useEffect(() => {
-    authFetch("http://127.0.0.1:8000/circular/inbox")
+    authFetch(`${API_BASE_URL}/circular/inbox`)
       .then((res) => res.json())
       .then((data) => setCirculars(data));
 

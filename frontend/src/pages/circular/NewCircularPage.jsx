@@ -3,6 +3,7 @@ import PageLayout from "@/components/layout/PageLayout";
 import CircularPreviewPage from "@/pages/circular/CircularPreviewPage";
 import { authFetch } from "@/utils/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { API_BASE_URL } from "@/utils/config";
 
 function NewCircularPage() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ function NewCircularPage() {
 useEffect(() => {
   // Fetch draft data if editing
   if (draftId) {
-    authFetch(`http://127.0.0.1:8000/circular/${draftId}`)
+    authFetch(`${API_BASE_URL}/circular/${draftId}`)
       .then((res) => res.json())
       .then((data) => {
         setCircularTitle(data.subject || "");
@@ -62,7 +63,7 @@ useEffect(() => {
       I: "Project Management",
     };
 
-    authFetch("http://127.0.0.1:8000/circular/recipients")
+    authFetch(`${API_BASE_URL}/circular/recipients`)
       .then((res) => res.json())
       .then((data) => {
         setInternalDepts(data.internal || []);
@@ -156,8 +157,8 @@ useEffect(() => {
     }
 
     const apiUrl = draftId
-      ? `http://127.0.0.1:8000/circular/${draftId}`
-      : "http://127.0.0.1:8000/circular/draft";
+      ? `${API_BASE_URL}/circular/${draftId}`
+      : `${API_BASE_URL}/circular/draft`;
 
     const method = draftId ? "PUT" : "POST";
 
@@ -224,7 +225,7 @@ if (validFile) {
 
     if (draftId) {
       try {
-        const updateRes = await authFetch(`http://127.0.0.1:8000/circular/${draftId}`, {
+        const updateRes = await authFetch(`${API_BASE_URL}/circular/${draftId}`, {
           method: "PUT",
           body: formData,
         });
@@ -241,7 +242,7 @@ if (validFile) {
       }
 
       try {
-        const sendRes = await authFetch(`http://127.0.0.1:8000/circular/${draftId}/send`, {
+        const sendRes = await authFetch(`${API_BASE_URL}/circular/${draftId}/send`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -269,7 +270,7 @@ if (validFile) {
     }
 
     try {
-      const res = await authFetch("http://127.0.0.1:8000/circular/send", {
+      const res = await authFetch(`${API_BASE_URL}/circular/send`, {
         method: "POST",
         body: formData,
       });

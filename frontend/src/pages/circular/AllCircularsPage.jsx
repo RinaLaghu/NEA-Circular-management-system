@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import CircularTable from "@/components/circular/CircularTable";
+import { API_BASE_URL } from "@/utils/config";
 
 const DIRECTORATE_NAMES = {
     A: "Planning, Monitoring and IT",
@@ -31,7 +32,7 @@ const getDepartmentName = (department) => {
 function CircularViewer({ circular, onClose }) {
   if (!circular) return null;
 
-  const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
+  const fileUrl = `${API_BASE_URL}${circular.file_url}`;
   const isPDF = circular.file_url?.endsWith(".pdf");
   const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
 
@@ -64,7 +65,7 @@ function CircularViewer({ circular, onClose }) {
           {circular.file_url && (
             <button
               onClick={() => {
-                window.open(`http://127.0.0.1:8000${circular.file_url}`, "_blank");
+                window.open(`${API_BASE_URL}${circular.file_url}`, "_blank");
               }}
               className="action-btn"
             >
@@ -88,7 +89,7 @@ function AllCircularsPage() {
   const [selectedCircular, setSelectedCircular] = useState(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/circular/")
+    fetch(`${API_BASE_URL}/circular/`)
       .then((res) => res.json())
       .then((data) => {
         const sorted = (data || []).sort((a, b) => new Date(b.date) - new Date(a.date));

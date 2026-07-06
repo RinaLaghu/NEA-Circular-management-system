@@ -2,6 +2,7 @@ import PageLayout from "@/components/layout/PageLayout";
 import CircularTable from "@/components/circular/CircularTable";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/utils/config";
 
 function ArchivePage() {
   const [circulars, setCirculars] = useState([]);
@@ -19,7 +20,7 @@ function ArchivePage() {
 
     const fetchArchive = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/circular/archive", {
+        const res = await fetch(`${API_BASE_URL}/circular/archive`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -60,7 +61,7 @@ function ArchivePage() {
       return;
     }
 
-    const res = await fetch(`http://127.0.0.1:8000/circular/unarchive/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/circular/unarchive/${id}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -91,7 +92,7 @@ function ArchivePage() {
       return;
     }
 
-    const res = await fetch(`http://127.0.0.1:8000/circular/delete/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/circular/delete/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -156,10 +157,10 @@ function ArchivePage() {
               <div style={{ marginTop: "30px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
                 <h4 style={{ marginBottom: "15px", color: "#666" }}>Attachment:</h4>
                 {selectedCircular.file_url.endsWith(".pdf") && (
-                  <iframe src={`http://127.0.0.1:8000${selectedCircular.file_url}`} width="100%" height="500px" style={{ border: "1px solid #ccc", borderRadius: "4px" }} />
+                  <iframe src={`${API_BASE_URL}${selectedCircular.file_url}`} width="100%" height="500px" style={{ border: "1px solid #ccc", borderRadius: "4px" }} />
                 )}
                 {selectedCircular.file_url.match(/\.(jpg|jpeg|png)$/i) && (
-                  <img src={`http://127.0.0.1:8000${selectedCircular.file_url}`} alt="attachment preview" style={{ maxWidth: "100%", borderRadius: "4px", border: "1px solid #ccc" }} />
+                  <img src={`${API_BASE_URL}${selectedCircular.file_url}`} alt="attachment preview" style={{ maxWidth: "100%", borderRadius: "4px", border: "1px solid #ccc" }} />
                 )}
               </div>
             )}
@@ -168,7 +169,7 @@ function ArchivePage() {
               {selectedCircular.file_url && (
                 <button
                   onClick={() => {
-                    window.open(`http://127.0.0.1:8000${selectedCircular.file_url}`, "_blank");
+                    window.open(`${API_BASE_URL}${selectedCircular.file_url}`, "_blank");
                   }}
                   className="action-btn"
                 >

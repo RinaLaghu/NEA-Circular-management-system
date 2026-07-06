@@ -413,16 +413,40 @@ frontend/
 
 ## Notes On Current State
 
-- Backend has foundational app/settings/router/db/session structure in place.
-- Backend auth route is still demo logic (hardcoded credential check).
-- Frontend pages are mostly UI-complete and currently use mock data.
-- Frontend-to-backend auth and circular CRUD APIs are not fully integrated yet.
+- The backend is fully built with FastAPI and SQLAlchemy.
+- Real authentication and token sessions are implemented.
+- The frontend is fully integrated with the backend API for all CRUD operations, Inbox, Sent, Drafts, and Archiving.
+- The system is now parameterized with environment variables for deployment.
 
-## Suggested Next Milestones
+## Deployment Instructions
 
-1. Connect `login.jsx` to `POST /auth/login` and store token/session state.
-2. Create circular model + migration + CRUD API endpoints in backend.
-3. Replace frontend mock circular arrays with backend API calls.
-4. Add tests:
-	 - backend API tests (health, auth, DB)
-	 - frontend component/page tests for key flows
+### 1) Backend Deployment
+
+Ensure you set the required environment variables in a `.env` file (or via your deployment platform):
+
+```env
+APP_ENV=production
+ALLOWED_ORIGINS=https://your-frontend-domain.com
+DATABASE_URL=postgresql://user:password@host/dbname
+SECRET_KEY=your_secure_random_key
+```
+
+Run the backend via Uvicorn (or Gunicorn in production):
+```powershell
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+### 2) Frontend Deployment
+
+Before building, set the API URL in `frontend/.env`:
+
+```env
+VITE_API_URL=https://api.yourdomain.com
+```
+
+Build and serve the static files:
+```powershell
+cd frontend
+npm run build
+# Serve the /dist folder using Nginx, Apache, or any static hosting service.
+```

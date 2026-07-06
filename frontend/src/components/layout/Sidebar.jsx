@@ -2,6 +2,7 @@ import { Send, Inbox, DraftingCompass, Archive, LayoutList, LogOut } from "lucid
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import logo from "@/assets/logo1.png";
+import { API_BASE_URL } from "@/utils/config";
 
 function Sidebar() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ function Sidebar() {
         // ✅ FIX: use token directly from localStorage
         const token = localStorage.getItem("token");
         const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-        const res = await fetch("http://127.0.0.1:8000/circular/stats", { headers });
+        const res = await fetch(`${API_BASE_URL}/circular/stats`, { headers });
         if (!res.ok) return;
         const data = await res.json();
         setUnreadCount(data.unread || 0);

@@ -6,11 +6,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import filterIcon from "@/assets/filter.png";
 import downloadIcon from "@/assets/download.png";
+import { API_BASE_URL } from "@/utils/config";
 
 function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn, isAdministration }) {
   if (!circular) return null;
 
-  const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
+  const fileUrl = `${API_BASE_URL}${circular.file_url}`;
   const isPDF = circular.file_url?.endsWith(".pdf");
   const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
 
@@ -35,7 +36,7 @@ function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn, i
           {circular.file_url && (
             <button
               onClick={() => {
-                window.open(`http://127.0.0.1:8000${circular.file_url}`, "_blank");
+                window.open(`${API_BASE_URL}${circular.file_url}`, "_blank");
               }}
               className="action-btn"
             >
@@ -77,7 +78,7 @@ function ForwardButton({ circularId, onClose }) {
     try {
       const token = localStorage.getItem("token");
       const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-      const res = await fetch("http://127.0.0.1:8000/circular/recipients", { headers });
+      const res = await fetch(`${API_BASE_URL}/circular/recipients`, { headers });
       if (!res.ok) throw new Error("Failed to load recipients");
       const data = await res.json();
       const payload = JSON.parse(atob(token.split(".")[1]));
@@ -101,7 +102,7 @@ function ForwardButton({ circularId, onClose }) {
     try {
       const token = localStorage.getItem("token");
       const headers = token ? { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
-      const res = await fetch(`http://127.0.0.1:8000/circular/${encodeURIComponent(circularId)}/forward`, {
+      const res = await fetch(`${API_BASE_URL}/circular/${encodeURIComponent(circularId)}/forward`, {
         method: "POST",
         headers,
         body: JSON.stringify({ internal_dept_ids: selected })
@@ -208,7 +209,7 @@ function CircularDashboard() {
     }
     const headers = token ? { "Authorization": `Bearer ${token}` } : {};
 
-    fetch("http://127.0.0.1:8000/circular/inbox", { headers })
+    fetch(`${API_BASE_URL}/circular/inbox`, { headers })
       .then((res) => {
         if (!res.ok) throw new Error("Failed");
         return res.json();
@@ -216,7 +217,7 @@ function CircularDashboard() {
       .then((data) => setCirculars(data || []))
       .catch(e => console.error(e));
 
-    fetch("http://127.0.0.1:8000/circular/stats", { headers })
+    fetch(`${API_BASE_URL}/circular/stats`, { headers })
       .then((res) => {
         if (!res.ok) throw new Error("Failed");
         return res.json();
@@ -233,7 +234,7 @@ function CircularDashboard() {
       const token = localStorage.getItem("token");
       const headers = token ? { "Authorization": `Bearer ${token}` } : {};
       await fetch(
-        `http://127.0.0.1:8000/circular/read/${encodeURIComponent(c.id)}`,
+        `${API_BASE_URL}/circular/read/${encodeURIComponent(c.id)}`,
         { method: "PUT", headers }
       );
 
@@ -254,7 +255,7 @@ function CircularDashboard() {
     const token = localStorage.getItem("token");
     const headers = token ? { "Authorization": `Bearer ${token}` } : {};
     await fetch(
-      `http://127.0.0.1:8000/circular/archive/${encodeURIComponent(id)}`,
+      `${API_BASE_URL}/circular/archive/${encodeURIComponent(id)}`,
       { method: "PUT", headers }
     );
 

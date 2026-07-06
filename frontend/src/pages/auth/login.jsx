@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import "@/styles/login.css";
 import { useNavigate } from "react-router-dom";
 import lockIcon from "../../assets/lock.png";
+import { API_BASE_URL } from "@/utils/config";
 //import logo from "../../assets/logo.png";
 
 function Login() {
@@ -177,7 +178,7 @@ function Login() {
     setError("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/department/login", {
+      const res = await fetch(`${API_BASE_URL}/department/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

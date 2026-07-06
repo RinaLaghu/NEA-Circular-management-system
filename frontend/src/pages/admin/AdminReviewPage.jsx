@@ -3,13 +3,14 @@ import Topbar from "@/components/layout/Topbar";
 import CircularTable from "@/components/circular/CircularTable";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/utils/config";
 import filterIcon from "@/assets/filter.png";
 import downloadIcon from "@/assets/download.png";
 
 function CircularViewer({ circular, onClose, onArchive, onCompose, isLoggedIn }) {
   if (!circular) return null;
 
-  const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
+  const fileUrl = `${API_BASE_URL}${circular.file_url}`;
   const isPDF = circular.file_url?.endsWith(".pdf");
   const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
 
@@ -88,7 +89,7 @@ function AdminReviewPage() {
     const headers = token ? { "Authorization": `Bearer ${token}` } : {};
 
     // Fetch pending approvals from same directorate
-    fetch("http://127.0.0.1:8000/circular/admin-review", { headers })
+    fetch(`${API_BASE_URL}/circular/admin-review`, { headers })
       .then((res) => {
         if (!res.ok) throw new Error("Failed");
         return res.json();
@@ -105,7 +106,7 @@ function AdminReviewPage() {
     const token = localStorage.getItem("token");
     const headers = token ? { "Authorization": `Bearer ${token}` } : {};
     await fetch(
-      `http://127.0.0.1:8000/circular/archive/${encodeURIComponent(id)}`,
+      `${API_BASE_URL}/circular/archive/${encodeURIComponent(id)}`,
       { method: "PUT", headers }
     );
 

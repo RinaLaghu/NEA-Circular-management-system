@@ -3,6 +3,7 @@ import PageLayout from "@/components/layout/PageLayout";
 import CircularListCard from "@/components/ui/CircularListCard";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "@/utils/api";
+import { API_BASE_URL } from "@/utils/config";
 
 function DraftsPage() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ function DraftsPage() {
   useEffect(() => {
   const fetchDrafts = async () => {
     try {
-      const res = await authFetch("http://127.0.0.1:8000/circular/drafts");
+      const res = await authFetch(`${API_BASE_URL}/circular/drafts`);
       const data = await res.json();
       setDrafts(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -40,7 +41,7 @@ function DraftsPage() {
     if (!confirmDelete) return;
 
     try {
-      const res = await authFetch(`http://127.0.0.1:8000/circular/delete/${id}`, {
+      const res = await authFetch(`${API_BASE_URL}/circular/delete/${id}`, {
         method: "DELETE"
       });
 

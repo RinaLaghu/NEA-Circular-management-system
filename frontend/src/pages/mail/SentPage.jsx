@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import PageLayout from "@/components/layout/PageLayout";
 import CircularListCard from "@/components/ui/CircularListCard";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/utils/config";
 
 function SentCircularViewer({ circular, onClose }) {
   if (!circular) return null;
 
-  const fileUrl = `http://127.0.0.1:8000${circular.file_url}`;
+  const fileUrl = `${API_BASE_URL}${circular.file_url}`;
   const isPDF = circular.file_url?.endsWith(".pdf");
   const isImage = circular.file_url?.match(/\.(jpg|jpeg|png)$/i);
   const recipients = circular.department ? circular.department.split(",").map((r) => r.trim()) : [];
@@ -38,7 +39,7 @@ function SentCircularViewer({ circular, onClose }) {
           {circular.file_url && (
             <button
               onClick={() => {
-                window.open(`http://127.0.0.1:8000${circular.file_url}`, "_blank");
+                window.open(`${API_BASE_URL}${circular.file_url}`, "_blank");
               }}
               className="action-btn"
             >
@@ -63,7 +64,7 @@ function SentPage() {
       try {
         const token = localStorage.getItem("token");
         const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-        const res = await fetch("http://127.0.0.1:8000/circular/sent", { headers });
+        const res = await fetch(`${API_BASE_URL}/circular/sent`, { headers });
         const data = await res.json();
         console.log("Sent circular sample:", data[0]); 
         setSentCirculars(Array.isArray(data) ? data : []);
